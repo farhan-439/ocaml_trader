@@ -1,4 +1,5 @@
 (test
  (name test_finalproject)
- (libraries ounit2)
- (deps (glob_files_rec ../data/*)))
+ (libraries ounit2 csv finalproject)
+ (deps
+  (glob_files_rec ../data/*)))
