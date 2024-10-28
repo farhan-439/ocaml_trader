@@ -18,11 +18,9 @@ let () =
   let stock_name = read_line () in
 
   (try
-     let prices = get_prices stock_name in
-     let float_prices = snd (to_float prices) in
-     (* Convert prices to float list *)
+     let prices = get_prices stock_name stock_data in
      print_endline ("Prices for " ^ stock_name ^ ":");
-     print_prices float_prices
+     print_prices prices
    with
   | Failure msg -> print_endline ("Error: " ^ msg)
   | Not_found -> print_endline "Stock not found.");
@@ -34,6 +32,12 @@ let () =
       print_endline "Enter the pattern for stocks to update:";
       let pattern = read_line () in
       (* Apply update_prices to each element in stock_data *)
-      let _ = List.map (update_prices pattern) stock_data in
+      (*in the future, this will use a random pattern for each stock, but for
+        now it updates all*)
+      let new_stocks = List.map (update_prices pattern) stock_data in
+      new_stocks |> get_prices stock_name |> print_prices;
+      (*update for queried stock*)
+      print_endline "\nAll stocks updated below: \n\n";
+      List.iter (fun x -> x |> to_float |> snd |> print_prices) new_stocks;
       print_endline "Stock prices updated."
   | _ -> print_endline "No updates made. Goodbye!"
