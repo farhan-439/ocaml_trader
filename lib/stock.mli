@@ -8,11 +8,12 @@ val update_prices : string -> t -> t
    that pattern including some randomness. Ex: With some stock1 initialized as
    [1;2;3;4], update_prices "high" stock1 returns [1;2;3;4;7].*)
 
-val to_float : t -> float list
-(**[to_float] returns the float list representation of a certain stock.*)
+val to_float : t -> string * float list
+(**[to_float] returns the float list representation of a certain stock, with its
+   name as a double.*)
 
-val of_float : float list -> t
-(**[of_float] takes some float list and returns it as a stock.*)
+val of_float : string * float list -> t
+(**[of_float] takes some float list with a name and returns it as a stock.*)
 
 val read_csv : string -> t list
 (**[read_csv] takes a filename with appropriate stock history and returns a list

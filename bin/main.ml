@@ -9,7 +9,6 @@ let () =
   print_endline "Welcome to the Stock Query Interface!";
   print_endline "Please enter the filename of the stock data (e.g., stock.csv):";
   let filename = read_line () in
-
   (* Load the stock data from the file *)
   let stock_data = read_csv filename in
   print_endline "Stock data loaded.";
@@ -20,7 +19,7 @@ let () =
 
   (try
      let prices = get_prices stock_name in
-     let float_prices = to_float prices in
+     let float_prices = snd (to_float prices) in
      (* Convert prices to float list *)
      print_endline ("Prices for " ^ stock_name ^ ":");
      print_prices float_prices
