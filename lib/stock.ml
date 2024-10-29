@@ -3,6 +3,7 @@ type t = string * float list
 let () = Random.self_init ()
 
 let rec get_prices (name : string) (lst : t list) =
+  let name = String.lowercase_ascii name in
   match lst with
   | h :: t -> if fst h = name then snd h else get_prices name t
   | _ -> failwith "Stock not found."
@@ -22,8 +23,10 @@ let update_prices pattern stock =
   let priceAvg = avg_helper (snd stock) in
   (fst stock, snd stock @ [ priceAvg *. mult ])
 
-let to_float (stock : t) = (fst stock, snd stock)
-let of_float (name : string) (lst : float list) : t = (name, lst)
+let to_float (stock : t) = (stock |> fst |> String.capitalize_ascii, snd stock)
+
+let of_float (name : string) (lst : float list) : t =
+  (name |> String.lowercase_ascii, lst)
 
 (*creates a pair of name, float list from csv input*)
 let rec csv_helper = function
