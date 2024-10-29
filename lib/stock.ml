@@ -14,9 +14,10 @@ let avg_helper lst =
 let update_prices pattern stock =
   let rand = Random.float 20. in
   let mult =
-    if pattern = "high" then 1. +. (rand /. 10.) (*1 -> 3 randomly*)
-    else if pattern = "mid" then 0.8 +. (rand /. 28.5) (*.8 -> 1.5ish randomly*)
-    else 0.1 +. (rand /. 25. (*0.1 -> 0.9 randomly*))
+    if pattern = "high" then 1.1 +. (rand /. 100.) (*1.1 -> 1.3 randomly*)
+    else if pattern = "mid" then 0.9 +. (rand /. 100.) (*.9 -> 1.1 randomly*)
+    else 0.5 +. (rand /. 50.)
+    (*0.5 -> 0.9 randomly*)
   in
   let priceAvg = avg_helper (snd stock) in
   (fst stock, snd stock @ [ priceAvg *. mult ])

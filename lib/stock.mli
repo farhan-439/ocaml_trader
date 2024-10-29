@@ -7,8 +7,8 @@ val get_prices : string -> t list -> float list
 val update_prices : string -> t -> t
 (**[update_prices] takes a pattern and a stock and adds its next value using
    that pattern including some randomness. Accepted patterns are "high",
-   "medium", and "low". Ex: With some stock1 initialized as [1;2;3;4],
-   update_prices "high" stock1 returns [1;2;3;4;7].*)
+   "medium", and "low". Ex: With some stock1 initialized as [1.;2.;3.;4.],
+   update_prices "high" stock1 might return [1.;2.;3.;4.;5.1].*)
 
 val to_float : t -> string * float list
 (**[to_float] returns the float list representation of a certain stock, with its

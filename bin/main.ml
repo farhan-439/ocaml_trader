@@ -7,19 +7,24 @@ let print_prices prices =
 
 let () =
   print_endline "Welcome to the Stock Query Interface!";
-  print_endline "Please enter the filename of the stock data (e.g., stock.csv):";
+  print_endline
+    "Please enter the filename of the stock data (e.g., data/stocks.csv):";
   let filename = read_line () in
   (* Load the stock data from the file *)
-  let stock_data = read_csv filename in
-  print_endline "Stock data loaded.";
+  let stock_data =
+    try read_csv filename
+    with _ ->
+      print_endline "Error - file could not be found.";
+      exit 0
+  in
 
   (* Sample interaction: Query prices for a stock *)
   print_endline "Enter a stock name to get prices:";
-  let stock_name = read_line () in
+  let stock_name = String.lowercase_ascii (read_line ()) in
 
   (try
      let prices = get_prices stock_name stock_data in
-     print_endline ("Prices for " ^ stock_name ^ ":");
+     print_endline ("Prices for " ^ String.capitalize_ascii stock_name ^ ":");
      print_prices prices
    with
   | Failure msg -> print_endline ("Error: " ^ msg)
@@ -29,15 +34,25 @@ let () =
   print_endline "Do you want to update stock prices? (y/n)";
   match read_line () with
   | "y" | "Y" ->
-      print_endline "Enter the pattern for stocks to update:";
-      let pattern = read_line () in
       (* Apply update_prices to each element in stock_data *)
-      (*in the future, this will use a random pattern for each stock, but for
-        now it updates all*)
-      let new_stocks = List.map (update_prices pattern) stock_data in
-      new_stocks |> get_prices stock_name |> print_prices;
-      (*update for queried stock*)
-      print_endline "\nAll stocks updated below: \n\n";
-      List.iter (fun x -> x |> to_float |> snd |> print_prices) new_stocks;
+      (*This now uses a random pattern for each stock*)
+      let new_stocks =
+        List.map
+          (let rand = Random.int 10 in
+           let pattern =
+             if rand < 2 then "low" else if rand < 7 then "mid" else "high"
+             (*skewed slightly more towards high to offset wider low range*)
+           in
+           update_prices pattern)
+          stock_data
+      in
+      (*update for all stocks*)
+      List.iter
+        (fun x ->
+          print_string
+            ((x |> to_float |> fst |> String.capitalize_ascii) ^ " Stock: ");
+          (*prints the name of the stock*)
+          x |> to_float |> snd |> print_prices)
+        new_stocks;
       print_endline "Stock prices updated."
   | _ -> print_endline "No updates made. Goodbye!"
