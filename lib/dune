@@ -1,3 +1,4 @@
 (library
  (name finalproject)
+ (modules stock portfolio)
  (libraries csv))
