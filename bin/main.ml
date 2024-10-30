@@ -17,7 +17,6 @@ let () =
       exit 0
   in
 
-  
   print_endline "Enter a stock name to get prices:";
   let stock_name = String.lowercase_ascii (read_line ()) in
 
@@ -29,7 +28,6 @@ let () =
   | Failure msg -> print_endline ("Error: " ^ msg)
   | Not_found -> print_endline "Stock not found.");
 
-  
   print_endline
     "Do you want to update stock prices after the earnings call and make a \
      portfolio? (y/n)";
@@ -40,12 +38,12 @@ let () =
           (let rand = Random.int 10 in
            let pattern =
              if rand < 2 then "low" else if rand < 7 then "mid" else "high"
-            
            in
+
            update_prices pattern)
           stock_data
       in
-  
+
       List.iter
         (fun x ->
           print_string
@@ -54,7 +52,6 @@ let () =
         new_stocks;
       print_endline "Stock prices updated.";
 
-
       (* Portfolio functionality starts here *)
       print_endline "Would you like to create a portfolio? (y/n)";
       if read_line () = "y" then (
@@ -62,7 +59,6 @@ let () =
         let initial_balance = float_of_string (read_line ()) in
         let portfolio = ref (create_portfolio initial_balance) in
 
-       
         let rec portfolio_menu () =
           print_endline "\nOptions: (1) Buy stock (2) View portfolio (3) Exit";
           match read_line () with
