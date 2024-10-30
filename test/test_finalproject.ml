@@ -1,5 +1,6 @@
 open OUnit2
 open Finalproject
+open Portfolio
 
 let stocks = Stock.read_csv "../data/stocks.csv"
 
@@ -52,6 +53,76 @@ let test_of_float name prices =
   let retrieved_name, retrieved_prices = Stock.to_float stock in
   assert_equal name retrieved_name ~printer:Fun.id;
   assert_equal prices retrieved_prices ~printer:float_list_printer
+
+(*PORTFOLIO TESTS*)
+
+(** [test_create_portfolio balance expected_balance] tests the creation of a
+    portfolio with an initial balance and an empty stock list. *)
+let test_create_portfolio balance expected_balance =
+  let portfolio = create_portfolio balance in
+  assert_equal expected_balance (get_balance portfolio) ~printer:string_of_float;
+  assert_equal [] (get_stocks portfolio)
+
+(** [test_buy_stock portfolio stock_name qty market expected_balance expected_stocks]
+    tests buying stocks by checking the updated balance and stock list. *)
+let test_buy_stock portfolio stock_name qty market expected_balance
+    expected_stocks =
+  match buy_stock portfolio stock_name qty market with
+  | Some updated_portfolio ->
+      assert_equal expected_balance
+        (get_balance updated_portfolio)
+        ~printer:string_of_float;
+      assert_equal expected_stocks (get_stocks updated_portfolio)
+  | None -> assert_failure "Expected purchase to succeed"
+
+(** [test_buy_stock_insufficient_balance portfolio stock_name qty market] tests
+    buying stocks with insufficient balance, expecting it to fail. *)
+let test_buy_stock_insufficient_balance portfolio stock_name qty market =
+  match buy_stock portfolio stock_name qty market with
+  | None -> () (* Expected failure due to insufficient balance *)
+  | Some _ ->
+      assert_failure "Expected purchase to fail due to insufficient balance"
+
+(** [test_sell_stock portfolio stock_name qty market expected_balance expected_stocks]
+    tests selling stocks by checking the updated balance and stock list. *)
+let test_sell_stock portfolio stock_name qty market expected_balance
+    expected_stocks =
+  match sell_stock portfolio stock_name qty market with
+  | Some updated_portfolio ->
+      assert_equal expected_balance
+        (get_balance updated_portfolio)
+        ~printer:string_of_float;
+      assert_equal expected_stocks (get_stocks updated_portfolio)
+  | None -> assert_failure "Expected sale to succeed"
+
+(** [test_sell_stock_insufficient_qty portfolio stock_name qty market] tests
+    selling stocks with an insufficient quantity, expecting it to fail. *)
+let test_sell_stock_insufficient_qty portfolio stock_name qty market =
+  match sell_stock portfolio stock_name qty market with
+  | None -> () (* Expected failure due to insufficient shares *)
+  | Some _ -> assert_failure "Expected sale to fail due to insufficient shares"
+
+(** [test_portfolio_summary portfolio market expected_summary expected_balance]
+    tests that [portfolio_summary] returns the correct stock holdings and
+    balance. Uses a tolerance for floating-point comparisons *)
+let test_portfolio_summary portfolio market expected_summary expected_balance =
+  let summary, balance = portfolio_summary portfolio market in
+  List.iter2
+    (fun (name_expected, qty_expected, value_expected)
+         (name_actual, qty_actual, value_actual) ->
+      assert (name_expected = name_actual);
+      assert (qty_expected = qty_actual);
+      assert (abs_float (value_expected -. value_actual) <= 1e-5))
+    expected_summary summary;
+  assert (abs_float (expected_balance -. balance) <= 1e-5)
+
+let test_stocks =
+  [
+    Stock.of_float "Apple" [ 145.3; 146.2; 147.5; 148.0 ];
+    Stock.of_float "Microsoft" [ 305.1; 306.2; 307.0; 308.4 ];
+    Stock.of_float "Google" [ 2750.2; 2748.0; 2760.5; 2755.3 ];
+    Stock.of_float "Amazon" [ 3335.5; 3340.1; 3338.0; 3342.2 ];
+  ]
 
 let tests =
   "test suite"
@@ -107,6 +178,46 @@ let tests =
                Stock.of_float "Amazon" [ 3335.5; 3340.1; 3338.0; 3342.2 ];
              ]
              (Stock.read_csv "../data/stocks.csv") );
+         (* Portfolio Module Tests are here*)
+         ( "test create_portfolio" >:: fun _ ->
+           test_create_portfolio 10000.0 10000.0 );
+         ( "test buy_stock sufficient balance" >:: fun _ ->
+           let portfolio = create_portfolio 10000.0 in
+           test_buy_stock portfolio "Apple" 10 test_stocks 8520.0
+             [ ("Apple", 10) ] );
+         ( "test buy_stock insufficient balance" >:: fun _ ->
+           let portfolio = create_portfolio 100.0 in
+           test_buy_stock_insufficient_balance portfolio "Apple" 10 test_stocks
+         );
+         ( "test sell_stock sufficient quantity" >:: fun _ ->
+           let portfolio = create_portfolio 10000.0 in
+           match buy_stock portfolio "Apple" 10 test_stocks with
+           | Some p ->
+               test_sell_stock p "Apple" 5 test_stocks 9260.0 [ ("Apple", 5) ]
+           | None -> assert_failure "Failed to buy initial stock for testing" );
+         ( "test sell_stock insufficient quantity" >:: fun _ ->
+           let portfolio = create_portfolio 10000.0 in
+           match buy_stock portfolio "Apple" 5 test_stocks with
+           | Some p -> test_sell_stock_insufficient_qty p "Apple" 10 test_stocks
+           | None -> assert_failure "Failed to buy initial stock for testing" );
+         ( "test sell_stock all shares" >:: fun _ ->
+           let portfolio = create_portfolio 10000.0 in
+           match buy_stock portfolio "Apple" 10 test_stocks with
+           | Some p -> test_sell_stock p "Apple" 10 test_stocks 10000.0 []
+           | None -> assert_failure "Failed to buy initial stock for testing" );
+         ( "test portfolio_summary no stocks" >:: fun _ ->
+           let portfolio = create_portfolio 10000.0 in
+           test_portfolio_summary portfolio test_stocks [] 10000.0 );
+         ( "test portfolio_summary with stocks" >:: fun _ ->
+           let portfolio = create_portfolio 10000.0 in
+           match buy_stock portfolio "Apple" 5 test_stocks with
+           | Some p ->
+               (* Expected total value: 5 shares * latest price of Apple (148.0) = 740.0 *)
+               (* Expected balance after purchase: 10000.0 - 740.0 = 9260.0 *)
+               test_portfolio_summary p test_stocks
+                 [ ("Apple", 5, 740.0) ]
+                 9260.0
+           | None -> assert_failure "Failed to buy initial stock for testing" );
        ]
 
 let _ = run_test_tt_main tests
