@@ -1,7 +1,6 @@
 open Finalproject.Stock
 open Finalproject.Portfolio
 
-(* Helper function to print a list of floats *)
 let print_prices prices =
   List.iter (fun price -> Printf.printf "%.2f " price) prices;
   print_newline ()
@@ -11,7 +10,6 @@ let () =
   print_endline
     "Please enter the filename of the stock data (e.g., data/stocks.csv):";
   let filename = read_line () in
-  (* Load the stock data from the file *)
   let stock_data =
     try read_csv filename
     with _ ->
@@ -19,7 +17,7 @@ let () =
       exit 0
   in
 
-  (* Sample interaction: Query prices for a stock *)
+  
   print_endline "Enter a stock name to get prices:";
   let stock_name = String.lowercase_ascii (read_line ()) in
 
@@ -31,33 +29,32 @@ let () =
   | Failure msg -> print_endline ("Error: " ^ msg)
   | Not_found -> print_endline "Stock not found.");
 
-  (* Additional interface options *)
+  
   print_endline
     "Do you want to update stock prices after the earnings call and make a \
      portfolio? (y/n)";
   match read_line () with
   | "y" | "Y" ->
-      (* Apply update_prices to each element in stock_data *)
-      (*This now uses a random pattern for each stock*)
       let new_stocks =
         List.map
           (let rand = Random.int 10 in
            let pattern =
              if rand < 2 then "low" else if rand < 7 then "mid" else "high"
-             (*skewed slightly more towards high to offset wider low range*)
+            
            in
            update_prices pattern)
           stock_data
       in
-      (*update for all stocks*)
+  
       List.iter
         (fun x ->
           print_string
             ((x |> to_float |> fst |> String.capitalize_ascii) ^ " Stock: ");
-          (*prints the name of the stock*)
           x |> to_float |> snd |> print_prices)
         new_stocks;
       print_endline "Stock prices updated.";
+
+
       (* Portfolio functionality starts here *)
       print_endline "Would you like to create a portfolio? (y/n)";
       if read_line () = "y" then (
@@ -65,7 +62,7 @@ let () =
         let initial_balance = float_of_string (read_line ()) in
         let portfolio = ref (create_portfolio initial_balance) in
 
-        (* Portfolio menu for buying stocks and viewing the portfolio *)
+       
         let rec portfolio_menu () =
           print_endline "\nOptions: (1) Buy stock (2) View portfolio (3) Exit";
           match read_line () with
