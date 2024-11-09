@@ -64,34 +64,79 @@ let () =
         let rec portfolio_menu new_stocks =
           print_endline
             "\n\
-             Options: (1) Buy stock (2) View portfolio (3) Exit to earnings \
-             call (4) Exit program";
+             Options: (1) Buy stock (2) Sell stock (3) View portfolio (4) Exit \
+             to earnings call (5) Exit program";
           match read_line () with
           | "1" ->
               print_endline "Enter stock name to buy:";
               let stock_name =
                 try String.lowercase_ascii (read_line ())
                 with _ ->
-                  print_endline "Please try again with a string name.";
+                  print_endline "Please try again with a valid stock name.";
                   exit 0
               in
               print_endline "Enter quantity to buy:";
               let quantity =
                 try int_of_string (read_line ())
                 with _ ->
-                  print_endline "Please try again with an integer quantity.";
+                  print_endline
+                    "Please try again with a valid integer quantity.";
                   exit 0
               in
-              (match buy_stock !portfolio stock_name quantity new_stocks with
-              | Some updated_portfolio ->
-                  portfolio := updated_portfolio;
-                  Printf.printf "Bought %d shares of %s\n" quantity
-                    (String.capitalize_ascii stock_name)
-              | None ->
-                  print_endline
-                    "Purchase failed. Check balance or stock availability.");
+              (* Confirmation step *)
+              Printf.printf
+                "Are you sure you want to buy %d shares of %s? (y/n)\n" quantity
+                (String.capitalize_ascii stock_name);
+              if String.lowercase_ascii (read_line ()) = "y" then
+                match buy_stock !portfolio stock_name quantity new_stocks with
+                | Some updated_portfolio ->
+                    portfolio := updated_portfolio;
+                    Printf.printf "Bought %d shares of %s\n" quantity
+                      (String.capitalize_ascii stock_name)
+                | None ->
+                    print_endline
+                      "Purchase failed. Check balance or stock availability."
+              else print_endline "Purchase canceled.";
               portfolio_menu new_stocks
           | "2" ->
+              let stocks = get_stocks !portfolio in
+              if stocks = [] then (
+                print_endline "Error: You have no stocks to sell.";
+                portfolio_menu new_stocks)
+              else
+                let stock_name =
+                  match stocks with
+                  | [ (name, _) ] ->
+                      print_endline
+                        ("Assuming stock to sell is: "
+                        ^ String.capitalize_ascii name);
+                      name
+                  | _ ->
+                      print_endline "Enter stock name to sell:";
+                      String.lowercase_ascii (read_line ())
+                in
+                print_endline "Enter quantity to sell:";
+                let quantity = int_of_string (read_line ()) in
+                (* Confirmation step *)
+                Printf.printf
+                  "Are you sure you want to sell %d shares of %s? (y/n)\n"
+                  quantity
+                  (String.capitalize_ascii stock_name);
+                if String.lowercase_ascii (read_line ()) = "y" then
+                  match
+                    sell_stock !portfolio stock_name quantity new_stocks
+                  with
+                  | Some updated_portfolio ->
+                      portfolio := updated_portfolio;
+                      Printf.printf "Sold %d shares of %s\n" quantity
+                        (String.capitalize_ascii stock_name)
+                  | None ->
+                      print_endline
+                        "Sale failed. Check if you have enough shares to sell \
+                         or if the stock exists."
+                else print_endline "Sale canceled.";
+                portfolio_menu new_stocks
+          | "3" ->
               let summary, balance = portfolio_summary !portfolio new_stocks in
               Printf.printf "Current balance: %.2f\n" balance;
               List.iter
@@ -107,8 +152,8 @@ let () =
               in
               Printf.printf "Total value (balance + stock value): %.2f" sum;
               portfolio_menu new_stocks
-          | "3" -> print_endline "Simulating earnings call."
-          | "4" ->
+          | "4" -> print_endline "Simulating earnings call."
+          | "5" ->
               print_endline "Exiting program. Goodbye!";
               exit 0
           | _ ->

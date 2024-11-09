@@ -116,6 +116,61 @@ let test_portfolio_summary portfolio market expected_summary expected_balance =
     expected_summary summary;
   assert (abs_float (expected_balance -. balance) <= 1e-5)
 
+(** [test_buy_stock_existing_stock portfolio stock_name qty market expected_balance expected_stocks]
+    tests buying additional shares of a stock already in the portfolio,
+    verifying the updated balance and stock list. *)
+let test_buy_stock_existing_stock portfolio stock_name qty market
+    expected_balance expected_stocks =
+  match buy_stock portfolio stock_name qty market with
+  | Some updated_portfolio ->
+      assert_equal expected_balance
+        (get_balance updated_portfolio)
+        ~printer:string_of_float;
+      assert_equal expected_stocks (get_stocks updated_portfolio)
+  | None -> assert_failure "Expected purchase to succeed"
+
+(** [test_sell_stock_all_but_one portfolio stock_name qty market expected_balance expected_stocks]
+    tests selling all but one share of a stock, ensuring the stock remains in
+    the portfolio with the correct quantity and balance update. *)
+let test_sell_stock_all_but_one portfolio stock_name qty market expected_balance
+    expected_stocks =
+  match sell_stock portfolio stock_name qty market with
+  | Some updated_portfolio ->
+      assert_equal expected_balance
+        (get_balance updated_portfolio)
+        ~printer:string_of_float;
+      assert_equal expected_stocks (get_stocks updated_portfolio)
+  | None -> assert_failure "Expected sale to succeed"
+
+(** [test_sell_stock_increases_balance portfolio stock_name qty market expected_balance expected_stocks]
+    tests that the portfolio balance increases after selling a stock. *)
+let test_sell_stock_increases_balance portfolio stock_name qty market
+    expected_balance expected_stocks =
+  match sell_stock portfolio stock_name qty market with
+  | Some updated_portfolio ->
+      assert (get_balance updated_portfolio > get_balance portfolio);
+      assert_equal expected_balance
+        (get_balance updated_portfolio)
+        ~printer:string_of_float;
+      assert_equal expected_stocks (get_stocks updated_portfolio)
+  | None -> assert_failure "Expected sale to succeed"
+
+(** [test_update_prices_no_change pattern stock_name stock_prices] tests
+    updating stock prices with a pattern that should result in minimal price
+    change (e.g., 'mid' pattern with a narrow range). *)
+let test_update_prices_no_change pattern stock_name stock_prices =
+  let updated_prices =
+    Stock.update_prices pattern (Stock.of_float stock_name stock_prices)
+  in
+  let _, prices = Stock.to_float updated_prices in
+  assert_equal
+    (List.length stock_prices + 1)
+    (List.length prices) ~printer:string_of_int;
+  let last_price = List.nth prices (List.length prices - 1) in
+  assert (
+    last_price >= List.nth stock_prices (List.length stock_prices - 1) *. 0.9
+    && last_price <= List.nth stock_prices (List.length stock_prices - 1) *. 1.1)
+
 let test_stocks =
   [
     Stock.of_float "Apple" [ 145.3; 146.2; 147.5; 148.0 ];
@@ -217,6 +272,30 @@ let tests =
                test_portfolio_summary p test_stocks
                  [ ("Apple", 5, 740.0) ]
                  9260.0
+           | None -> assert_failure "Failed to buy initial stock for testing" );
+         ( "test buy_stock_existing_stock" >:: fun _ ->
+           let portfolio = create_portfolio 10000.0 in
+           match buy_stock portfolio "Apple" 5 test_stocks with
+           | Some p ->
+               test_buy_stock_existing_stock p "Apple" 5 test_stocks 8520.0
+                 [ ("Apple", 10) ]
+           | None -> assert_failure "Failed to buy initial stock for testing" );
+         ( "test sell_stock_all_but_one" >:: fun _ ->
+           let portfolio = create_portfolio 10000.0 in
+           match buy_stock portfolio "Apple" 10 test_stocks with
+           | Some p ->
+               test_sell_stock_all_but_one p "Apple" 9 test_stocks 9852.0
+                 [ ("Apple", 1) ]
+           | None -> assert_failure "Failed to buy initial stock for testing" );
+         ( "test update_prices minimal change" >:: fun _ ->
+           test_update_prices_no_change "mid" "Apple"
+             [ 145.3; 146.2; 147.5; 148.0 ] );
+         ( "test sell_stock increases balance" >:: fun _ ->
+           let portfolio = create_portfolio 10000.0 in
+           match buy_stock portfolio "Apple" 10 test_stocks with
+           | Some p ->
+               test_sell_stock_increases_balance p "Apple" 5 test_stocks 9260.0
+                 [ ("Apple", 5) ]
            | None -> assert_failure "Failed to buy initial stock for testing" );
        ]
 

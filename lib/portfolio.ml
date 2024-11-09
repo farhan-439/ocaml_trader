@@ -34,7 +34,7 @@ let sell_stock portfolio stock_name qty (market : Stock.t list) =
   | [] -> None
   | prices ->
       let latest_price = List.nth prices (List.length prices - 1) in
-      let rec find_and_update_stocks stocks =
+      let rec update_stocks_and_balance stocks acc_balance =
         match stocks with
         | [] -> None
         | (name, quantity) :: rest -> (
@@ -47,21 +47,21 @@ let sell_stock portfolio stock_name qty (market : Stock.t list) =
                 let total_sale = float_of_int qty *. latest_price in
                 Some
                   {
-                    balance = portfolio.balance +. total_sale;
+                    balance = acc_balance +. total_sale;
                     stocks = updated_stocks;
                   }
               else None
             else
-              match find_and_update_stocks rest with
+              match update_stocks_and_balance rest acc_balance with
               | None -> None
               | Some updated_portfolio ->
                   Some
                     {
-                      balance = portfolio.balance;
+                      balance = updated_portfolio.balance;
                       stocks = (name, quantity) :: updated_portfolio.stocks;
                     })
       in
-      find_and_update_stocks portfolio.stocks
+      update_stocks_and_balance portfolio.stocks portfolio.balance
 
 let portfolio_summary portfolio (market : Stock.t list) =
   let rec stock_value_summary stocks =
