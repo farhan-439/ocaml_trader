@@ -1,4 +1,4 @@
 (library
  (name finalproject)
- (modules stock portfolio)
- (libraries csv))
+ (modules stock portfolio api rt_portfolio)
+ (libraries csv cohttp-lwt-unix yojson lwt))
