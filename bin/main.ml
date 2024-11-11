@@ -31,6 +31,29 @@ let rec quantity_input_loop mode =
     print_endline "Invalid input - please enter a valid integer.";
     quantity_input_loop mode
 
+(**[purchase_loop] takes in a portfolio and prompts users to enter a stock
+   ticker to buy and loops until they provide a valid input.*)
+let rec purchase_loop portfolio =
+  print_endline "Enter stock ticker to buy: ";
+  let stock_name = String.uppercase_ascii (read_line ()) in
+  let quantity = quantity_input_loop "buy" in
+  Printf.printf "Are you sure you want to buy %d shares of %s? (y/n)\n" quantity
+    stock_name;
+  (*this is all setup*)
+  let input = read_line () in
+  if String.lowercase_ascii input = "y" then (
+    try
+      match Lwt_main.run (RP.buy_stock !portfolio stock_name quantity) with
+      | Some updated_portfolio ->
+          portfolio := updated_portfolio;
+          Printf.printf "Bought %d shares of %s\n" quantity stock_name
+      | None ->
+          print_endline "Purchase failed. Check balance or stock availability."
+    with _ ->
+      print_endline ("Could not find " ^ stock_name ^ ". Please try again.");
+      purchase_loop portfolio)
+  else print_endline "Purchase canceled."
+
 let () =
   print_endline "Welcome to the Stock Query Interface!";
   (* Portfolio functionality starts here *)
@@ -222,24 +245,7 @@ let () =
              Options: (1) Buy stock (2) Sell stock (3) View portfolio (4) Exit";
           match read_line () with
           | "1" ->
-              print_endline "Enter stock ticker to buy:";
-              let stock_name = String.uppercase_ascii (read_line ()) in
-              let quantity = quantity_input_loop "buy" in
-              (* Confirmation step *)
-              Printf.printf
-                "Are you sure you want to buy %d shares of %s? (y/n)\n" quantity
-                stock_name;
-              if String.lowercase_ascii (read_line ()) = "y" then
-                match
-                  Lwt_main.run (RP.buy_stock !portfolio stock_name quantity)
-                with
-                | Some updated_portfolio ->
-                    portfolio := updated_portfolio;
-                    Printf.printf "Bought %d shares of %s\n" quantity stock_name
-                | None ->
-                    print_endline
-                      "Purchase failed. Check balance or stock availability."
-              else print_endline "Purchase canceled.";
+              purchase_loop portfolio;
               rt_portfolio_menu ()
           | "2" ->
               let stocks = RP.get_stocks !portfolio in
