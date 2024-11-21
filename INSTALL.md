@@ -8,6 +8,7 @@ Installations:
 - cohttp-lwt-unix (http requests) (opam install cohttp-lwt-unix)
 - lwt_ssl (lightweight thread for the asynchronous call) (opam install lwt_ssl)
 - yojson (for parsing the api responses) (opam install yojson)
+- ANSITerminal (for coloring terminal output) (opam install ANSITerminal)
 
 Running code:
 
