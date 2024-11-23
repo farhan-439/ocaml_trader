@@ -17,9 +17,10 @@ let fetch_stock_price ticker =
   if status = 200 then
     body |> Cohttp_lwt.Body.to_string >|= fun body_str ->
     let json = Yojson.Basic.from_string body_str in
-    let price = json |> Yojson.Basic.Util.member "c" |> Yojson.Basic.Util.to_float_option in
+    let price =
+      json |> Yojson.Basic.Util.member "c" |> Yojson.Basic.Util.to_float_option
+    in
     match price with
     | Some p -> Some { ticker; price = Some p }
     | None -> None
-  else
-    Lwt.return_none
+  else Lwt.return_none

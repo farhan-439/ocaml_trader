@@ -7,6 +7,33 @@ let print_prices prices =
   List.iter (fun price -> Printf.printf "%.2f " price) prices;
   print_newline ()
 
+let print_help () =
+  print_endline "\nAvailable Commands:";
+  print_endline "1. Buy stock - Allows you to buy shares of a specific stock.";
+  print_endline "2. Sell stock - Allows you to sell shares of a specific stock.";
+  print_endline
+    "3. View portfolio - Displays your current portfolio summary, including \
+     stock holdings and balance.";
+  print_endline
+    "4. Exit to earnings call (simulated mode) - Updates stock prices based on \
+     simulated market conditions.";
+  print_endline "5. Exit program - Closes the application.";
+  print_endline "6. Help - Displays this help menu.\n";
+  print_endline
+    "Usage: Enter the number corresponding to the command you wish to execute.\n"
+
+let print_help_rt () =
+  print_endline "\nReal-Time Portfolio Commands:";
+  print_endline "1. Buy stock - Buy shares of a stock in real-time.";
+  print_endline "2. Sell stock - Sell shares of a stock in real-time.";
+  print_endline
+    "3. View portfolio - Displays your current portfolio summary, including \
+     stock holdings and balance.";
+  print_endline "4. Exit - Closes the real-time portfolio.";
+  print_endline "5. Help - Displays this help menu.\n";
+  print_endline
+    "Usage: Enter the number corresponding to the command you wish to execute.\n"
+
 (**[balance_input_loop] takes in a mode (simulated/real-time) and prompts users
    for portfolio balance input and loops until they provide a valid input.*)
 let rec balance_input_loop mode =
@@ -189,6 +216,8 @@ let () =
           Stdlib.print_string " Exit to earnings call ";
           print_num_enclosed "5" ANSITerminal.white;
           Stdlib.print_string " Exit program\n";
+          print_num_enclosed "6" ANSITerminal.green;
+          Stdlib.print_string " Help\n";
           match read_line () with
           | "1" ->
               print_endline "Enter stock name to buy:";
@@ -274,6 +303,9 @@ let () =
           | "5" ->
               print_endline "Exiting program. Goodbye!";
               exit 0
+          | "6" ->
+              print_help ();
+              portfolio_menu new_stocks
           | _ ->
               print_endline "Invalid option. Try again.";
               portfolio_menu new_stocks
@@ -360,8 +392,10 @@ let () =
           Stdlib.print_string " Sell stock ";
           print_num_enclosed "3" ANSITerminal.magenta;
           Stdlib.print_string " View portfolio ";
-          print_num_enclosed "5" ANSITerminal.cyan;
+          print_num_enclosed "4" ANSITerminal.cyan;
           Stdlib.print_string " Exit\n";
+          print_num_enclosed "5" ANSITerminal.green;
+          Stdlib.print_string " Help\n";
           match read_line () with
           | "1" ->
               purchase_loop portfolio;
@@ -413,6 +447,10 @@ let () =
           | "4" ->
               print_endline "Exiting real-time portfolio. Goodbye!";
               exit 0
+          | "5" ->
+              (* Display help *)
+              print_help_rt ();
+              rt_portfolio_menu ()
           | _ ->
               print_endline "Invalid option. Try again.";
               rt_portfolio_menu ()
