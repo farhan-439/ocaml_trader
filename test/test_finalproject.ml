@@ -3,15 +3,18 @@ open Finalproject
 open Portfolio
 
 let stocks = Stock.read_csv "../data/stocks.csv"
+let fin_stocks = Stock.read_csv "../data/financial.csv"
 
 (**[float_list_printer] is a helper printer for pretty float list printing.*)
 let float_list_printer lst =
   "[" ^ String.concat "; " (List.map string_of_float lst) ^ "]"
 
 (**[test_get_prices stock price] will generate a test case for
-   [Stock.get_prices] using [stock] and [price].*)
-let test_get_prices stock price =
-  assert_equal price (Stock.get_prices stock stocks) ~printer:float_list_printer
+   [Stock.get_prices] using [stock] and [price] and a filename.*)
+let test_get_prices stock price filename =
+  assert_equal price
+    (Stock.get_prices stock (Stock.read_csv filename))
+    ~printer:float_list_printer
 
 (**[test_update_prices pattern stock_name stock_prices] will generate a test
    case for [Stock.update_prices] using [pattern], [stock_name] and
@@ -182,17 +185,85 @@ let test_stocks =
 let tests =
   "test suite"
   >::: [
-         ( "test basic" >:: fun _ ->
+         ( "test dune functionality" >:: fun _ ->
            assert_equal 0 0 ~printer:string_of_int;
            assert_equal "1" "1" ~printer:Fun.id );
          ( "test get_prices Apple" >:: fun _ ->
-           test_get_prices "Apple" [ 145.3; 146.2; 147.5; 148.0 ] );
+           test_get_prices "Apple"
+             [ 145.3; 146.2; 147.5; 148.0 ]
+             "../data/stocks.csv" );
          ( "test get_prices Microsoft" >:: fun _ ->
-           test_get_prices "Microsoft" [ 305.1; 306.2; 307.0; 308.4 ] );
+           test_get_prices "Microsoft"
+             [ 305.1; 306.2; 307.0; 308.4 ]
+             "../data/stocks.csv" );
          ( "test get_prices Google" >:: fun _ ->
-           test_get_prices "Google" [ 2750.2; 2748.0; 2760.5; 2755.3 ] );
+           test_get_prices "Google"
+             [ 2750.2; 2748.0; 2760.5; 2755.3 ]
+             "../data/stocks.csv" );
          ( "test get_prices Amazon" >:: fun _ ->
-           test_get_prices "Amazon" [ 3335.5; 3340.1; 3338.0; 3342.2 ] );
+           test_get_prices "Amazon"
+             [ 3335.5; 3340.1; 3338.0; 3342.2 ]
+             "../data/stocks.csv" );
+         ( "test get_prices JP Morgan" >:: fun _ ->
+           test_get_prices "Jp morgan"
+             [ 328.66; 488.23; 370.07; 292.7 ]
+             "../data/financial.csv" );
+         ( "test get_prices Bank of America" >:: fun _ ->
+           test_get_prices "Bank of america"
+             [ 189.94; 355.76; 155.91; 325.06 ]
+             "../data/financial.csv" );
+         ( "test get_prices Wells Fargo" >:: fun _ ->
+           test_get_prices "Wells fargo"
+             [ 225.91; 200.61; 334.89; 190.99 ]
+             "../data/financial.csv" );
+         ( "test get_prices Citi Group" >:: fun _ ->
+           test_get_prices "Citi group"
+             [ 238.48; 223.81; 364.25; 433.55 ]
+             "../data/financial.csv" );
+         ( "test get_prices Goldman Sachs" >:: fun _ ->
+           test_get_prices "Goldman sachs"
+             [ 433.44; 128.63; 499.54; 308.67 ]
+             "../data/financial.csv" );
+         ( "test get_prices Morgan Stanley" >:: fun _ ->
+           test_get_prices "Morgan stanley"
+             [ 422.44; 460.85; 159.41; 372.54 ]
+             "../data/financial.csv" );
+         ( "test get_prices American Express" >:: fun _ ->
+           test_get_prices "American express"
+             [ 333.81; 116.17; 288.77; 140.37 ]
+             "../data/financial.csv" );
+         ( "test get_prices US Bancorp" >:: fun _ ->
+           test_get_prices "US bancorp"
+             [ 161.17; 290.72; 389.38; 152.9 ]
+             "../data/financial.csv" );
+         ( "test get_prices PNC Financial" >:: fun _ ->
+           test_get_prices "Pnc financial"
+             [ 479.51; 451.17; 295.25; 213.26 ]
+             "../data/financial.csv" );
+         ( "test get_prices Capital One" >:: fun _ ->
+           test_get_prices "Capital one"
+             [ 460.08; 159.97; 323.45; 221.71 ]
+             "../data/financial.csv" );
+         ( "test get_prices Charles Schwab" >:: fun _ ->
+           test_get_prices "Charles schwab"
+             [ 199.89; 433.42; 390.73; 353.58 ]
+             "../data/financial.csv" );
+         ( "test get_prices BlackRock" >:: fun _ ->
+           test_get_prices "Blackrock"
+             [ 473.75; 484.41; 233.95; 433.61 ]
+             "../data/financial.csv" );
+         ( "test get_prices American International" >:: fun _ ->
+           test_get_prices "American international"
+             [ 219.67; 478.28; 176.9; 417.88 ]
+             "../data/financial.csv" );
+         ( "test get_prices MetLife" >:: fun _ ->
+           test_get_prices "Metlife"
+             [ 180.31; 194.68; 354.59; 445.64 ]
+             "../data/financial.csv" );
+         ( "test get_prices CME Group" >:: fun _ ->
+           test_get_prices "Cme group"
+             [ 349.82; 312.66; 299.36; 331.26 ]
+             "../data/financial.csv" );
          ( "test update_prices high Apple" >:: fun _ ->
            test_update_prices "high" "Apple" [ 145.3; 146.2; 147.5; 148.0 ] );
          ( "test update_prices mid Microsoft" >:: fun _ ->

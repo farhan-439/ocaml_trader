@@ -215,7 +215,7 @@ let () =
           print_num_enclosed "4" ANSITerminal.cyan;
           Stdlib.print_string " Exit to earnings call ";
           print_num_enclosed "5" ANSITerminal.white;
-          Stdlib.print_string " Exit program\n";
+          Stdlib.print_string " Exit program ";
           print_num_enclosed "6" ANSITerminal.green;
           Stdlib.print_string " Help\n";
           match read_line () with
@@ -393,7 +393,7 @@ let () =
           print_num_enclosed "3" ANSITerminal.magenta;
           Stdlib.print_string " View portfolio ";
           print_num_enclosed "4" ANSITerminal.cyan;
-          Stdlib.print_string " Exit\n";
+          Stdlib.print_string " Exit ";
           print_num_enclosed "5" ANSITerminal.green;
           Stdlib.print_string " Help\n";
           match read_line () with
