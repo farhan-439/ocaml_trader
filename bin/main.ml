@@ -1,7 +1,15 @@
 open Finalproject.Stock
+open Finalproject.Save_portfolio
 include ANSITerminal
 module P = Finalproject.Portfolio
 module RP = Finalproject.Rt_portfolio
+
+let market =
+  let filename = "data/stocks.csv" in
+  try read_csv filename
+  with _ ->
+    print_endline "Error - stock data file could not be found.";
+    exit 0
 
 let print_prices prices =
   List.iter (fun price -> Printf.printf "%.2f " price) prices;
@@ -20,6 +28,9 @@ let print_help () =
   print_endline "5. Exit program - Closes the application.";
   print_endline "6. Help - Displays this help menu.\n";
   print_endline
+    "7. Save portfolio - Saves your current portfolio to a file for later use.";
+
+  print_endline
     "Usage: Enter the number corresponding to the command you wish to execute.\n"
 
 let print_help_rt () =
@@ -31,6 +42,9 @@ let print_help_rt () =
      stock holdings and balance.";
   print_endline "4. Exit - Closes the real-time portfolio.";
   print_endline "5. Help - Displays this help menu.\n";
+  print_endline
+    "6. Save portfolio - Saves your current real-time portfolio to a file for \
+     later use.";
   print_endline
     "Usage: Enter the number corresponding to the command you wish to execute.\n"
 
@@ -201,8 +215,24 @@ let () =
         print_endline "";
         print_endline "Stock prices updated.";
 
-        let initial_balance = balance_input_loop "simulated" in
-        let portfolio = ref (P.create_portfolio initial_balance) in
+        let portfolio_file = "user_portfolio.json" in
+        let portfolio =
+          if Sys.file_exists portfolio_file then (
+            Printf.printf "Existing portfolio found. Loading from %s...\n"
+              portfolio_file;
+            match load_portfolio portfolio_file market with
+            | Some p -> ref p
+            | None ->
+                Printf.printf
+                  "Failed to load portfolio. Starting with a new portfolio.\n";
+                let initial_balance = balance_input_loop "new" in
+                ref (P.create_portfolio initial_balance))
+          else (
+            Printf.printf
+              "No saved portfolio found. Starting with a new portfolio.\n";
+            let initial_balance = balance_input_loop "new" in
+            ref (P.create_portfolio initial_balance))
+        in
 
         let rec portfolio_menu new_stocks =
           Stdlib.print_string "\nOptions: ";
@@ -218,6 +248,9 @@ let () =
           Stdlib.print_string " Exit program ";
           print_num_enclosed "6" ANSITerminal.green;
           Stdlib.print_string " Help\n";
+          print_num_enclosed "7" ANSITerminal.yellow;
+          Stdlib.print_string " Save portfolio ";
+
           match read_line () with
           | "1" ->
               print_endline "Enter stock name to buy:";
@@ -301,10 +334,15 @@ let () =
               portfolio_menu new_stocks
           | "4" -> print_endline "Simulating earnings call."
           | "5" ->
-              print_endline "Exiting program. Goodbye!";
+              save_portfolio !portfolio market portfolio_file;
+              print_endline "Portfolio saved. Exiting program. Goodbye!";
               exit 0
           | "6" ->
               print_help ();
+              portfolio_menu new_stocks
+          | "7" ->
+              save_portfolio !portfolio market portfolio_file;
+              print_endline "Portfolio saved successfully.";
               portfolio_menu new_stocks
           | _ ->
               print_endline "Invalid option. Try again.";
@@ -396,6 +434,9 @@ let () =
           Stdlib.print_string " Exit ";
           print_num_enclosed "5" ANSITerminal.green;
           Stdlib.print_string " Help\n";
+          print_num_enclosed "6" ANSITerminal.green;
+          Stdlib.print_string " Save portfolio ";
+
           match read_line () with
           | "1" ->
               purchase_loop portfolio;
