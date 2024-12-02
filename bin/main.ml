@@ -247,9 +247,9 @@ let () =
           print_num_enclosed "5" ANSITerminal.white;
           Stdlib.print_string " Exit program ";
           print_num_enclosed "6" ANSITerminal.green;
-          Stdlib.print_string " Help\n";
+          Stdlib.print_string " Help ";
           print_num_enclosed "7" ANSITerminal.yellow;
-          Stdlib.print_string " Save portfolio ";
+          Stdlib.print_string " Save portfolio\n";
 
           match read_line () with
           | "1" ->
@@ -433,9 +433,9 @@ let () =
           print_num_enclosed "4" ANSITerminal.cyan;
           Stdlib.print_string " Exit ";
           print_num_enclosed "5" ANSITerminal.green;
-          Stdlib.print_string " Help\n";
-          print_num_enclosed "6" ANSITerminal.green;
-          Stdlib.print_string " Save portfolio ";
+          Stdlib.print_string " Help ";
+          print_num_enclosed "6" ANSITerminal.yellow;
+          Stdlib.print_string " Save portfolio\n";
 
           match read_line () with
           | "1" ->
@@ -492,6 +492,10 @@ let () =
               (* Display help *)
               print_help_rt ();
               rt_portfolio_menu ()
+          | "6" ->
+              (* save_portfolio !portfolio market portfolio_file; print_endline
+                 "Portfolio saved successfully."; *)
+              failwith "not implemented rn"
           | _ ->
               print_endline "Invalid option. Try again.";
               rt_portfolio_menu ()
