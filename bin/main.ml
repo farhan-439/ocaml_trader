@@ -1,5 +1,6 @@
 open Finalproject.Stock
 open Finalproject.Save_portfolio
+open Finalproject.Rt_save_portfolio
 include ANSITerminal
 module P = Finalproject.Portfolio
 module RP = Finalproject.Rt_portfolio
@@ -419,8 +420,24 @@ let () =
         earnings_call new_stocks
     | "2" ->
         (* Real-time portfolio *)
-        let initial_balance = balance_input_loop "real-time" in
-        let portfolio = ref (RP.create_rt_portfolio initial_balance) in
+        let portfolio_file = "user_portfolio_rt.json" in
+        let portfolio =
+          if Sys.file_exists portfolio_file then (
+            Printf.printf "Existing portfolio found. Loading from %s...\n"
+              portfolio_file;
+            match load_rt_portfolio portfolio_file with
+            | Some p -> ref p
+            | None ->
+                Printf.printf
+                  "Failed to load portfolio. Starting with a new portfolio.\n";
+                let initial_balance = balance_input_loop "new" in
+                ref (RP.create_rt_portfolio initial_balance))
+          else (
+            Printf.printf
+              "No saved portfolio found. Starting with a new portfolio.\n";
+            let initial_balance = balance_input_loop "real-time" in
+            ref (RP.create_rt_portfolio initial_balance))
+        in
 
         let rec rt_portfolio_menu () =
           Stdlib.print_string "\nOptions: ";
@@ -493,9 +510,10 @@ let () =
               print_help_rt ();
               rt_portfolio_menu ()
           | "6" ->
-              (* save_portfolio !portfolio market portfolio_file; print_endline
-                 "Portfolio saved successfully."; *)
-              failwith "not implemented rn"
+              save_rt_portfolio !portfolio portfolio_file;
+              rt_portfolio_menu ()
+          (* save_portfolio !portfolio market portfolio_file; print_endline
+             "Portfolio saved successfully."; *)
           | _ ->
               print_endline "Invalid option. Try again.";
               rt_portfolio_menu ()
