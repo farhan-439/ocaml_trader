@@ -275,6 +275,51 @@ let tests =
          ( "test update_prices high Amazon" >:: fun _ ->
            test_update_prices "high" "Amazon" [ 3335.5; 3340.1; 3338.0; 3342.2 ]
          );
+         ( "test update_prices high JP Morgan" >:: fun _ ->
+           test_update_prices "high" "Jp morgan"
+             [ 328.66; 488.23; 370.07; 292.7 ] );
+         ( "test update_prices mid Bank of America" >:: fun _ ->
+           test_update_prices "mid" "Bank of america"
+             [ 189.94; 355.76; 155.91; 325.06 ] );
+         ( "test update_prices low Wells Fargo" >:: fun _ ->
+           test_update_prices "low" "Wells fargo"
+             [ 225.91; 200.61; 334.89; 190.99 ] );
+         ( "test update_prices high Citi Group" >:: fun _ ->
+           test_update_prices "high" "Citi group"
+             [ 238.48; 223.81; 364.25; 433.55 ] );
+         ( "test update_prices mid Goldman Sachs" >:: fun _ ->
+           test_update_prices "mid" "Goldman sachs"
+             [ 433.44; 128.63; 499.54; 308.67 ] );
+         ( "test update_prices low Morgan Stanley" >:: fun _ ->
+           test_update_prices "low" "Morgan stanley"
+             [ 422.44; 460.85; 159.41; 372.54 ] );
+         ( "test update_prices high American Express" >:: fun _ ->
+           test_update_prices "high" "American express"
+             [ 333.81; 116.17; 288.77; 140.37 ] );
+         ( "test update_prices mid US Bancorp" >:: fun _ ->
+           test_update_prices "mid" "Us bancorp"
+             [ 161.17; 290.72; 389.38; 152.9 ] );
+         ( "test update_prices low PNC financial" >:: fun _ ->
+           test_update_prices "low" "Pnc financial"
+             [ 479.51; 451.17; 295.25; 213.26 ] );
+         ( "test update_prices high Capital One" >:: fun _ ->
+           test_update_prices "high" "Capital one"
+             [ 460.08; 159.97; 323.45; 221.71 ] );
+         ( "test update_prices mid Charles Schwab" >:: fun _ ->
+           test_update_prices "mid" "Charles schwab"
+             [ 199.89; 433.42; 390.73; 353.58 ] );
+         ( "test update_prices low Blackrock" >:: fun _ ->
+           test_update_prices "low" "Blackrock"
+             [ 473.75; 484.41; 233.95; 433.61 ] );
+         ( "test update_prices high American International" >:: fun _ ->
+           test_update_prices "high" "American international"
+             [ 219.67; 478.28; 176.9; 417.88 ] );
+         ( "test update_prices mid Metlife" >:: fun _ ->
+           test_update_prices "mid" "Metlife" [ 180.31; 194.68; 354.59; 445.64 ]
+         );
+         ( "test update_prices low CME Group" >:: fun _ ->
+           test_update_prices "low" "Cme group"
+             [ 349.82; 312.66; 299.36; 331.26 ] );
          ( "test to_float Apple" >:: fun _ ->
            test_to_float (List.hd stocks) "Apple" [ 145.3; 146.2; 147.5; 148.0 ]
          );
@@ -287,6 +332,51 @@ let tests =
          ( "test to_float Amazon" >:: fun _ ->
            test_to_float (List.nth stocks 3) "Amazon"
              [ 3335.5; 3340.1; 3338.0; 3342.2 ] );
+         ( "test to_float JP Morgan" >:: fun _ ->
+           test_to_float (List.hd fin_stocks) "Jp morgan"
+             [ 328.66; 488.23; 370.07; 292.7 ] );
+         ( "test to_float Bank of America" >:: fun _ ->
+           test_to_float (List.nth fin_stocks 1) "Bank of america"
+             [ 189.94; 355.76; 155.91; 325.06 ] );
+         ( "test to_float Wells Fargo" >:: fun _ ->
+           test_to_float (List.nth fin_stocks 2) "Wells fargo"
+             [ 225.91; 200.61; 334.89; 190.99 ] );
+         ( "test to_float Citi Group" >:: fun _ ->
+           test_to_float (List.nth fin_stocks 3) "Citi group"
+             [ 238.48; 223.81; 364.25; 433.55 ] );
+         ( "test to_float Goldman Sachs" >:: fun _ ->
+           test_to_float (List.nth fin_stocks 4) "Goldman sachs"
+             [ 433.44; 128.63; 499.54; 308.67 ] );
+         ( "test to_float Morgan Stanley" >:: fun _ ->
+           test_to_float (List.nth fin_stocks 5) "Morgan stanley"
+             [ 422.44; 460.85; 159.41; 372.54 ] );
+         ( "test to_float American Express" >:: fun _ ->
+           test_to_float (List.nth fin_stocks 6) "American express"
+             [ 333.81; 116.17; 288.77; 140.37 ] );
+         ( "test to_float US Bancorp" >:: fun _ ->
+           test_to_float (List.nth fin_stocks 7) "Us bancorp"
+             [ 161.17; 290.72; 389.38; 152.9 ] );
+         ( "test to_float PNC financial" >:: fun _ ->
+           test_to_float (List.nth fin_stocks 8) "Pnc financial"
+             [ 479.51; 451.17; 295.25; 213.26 ] );
+         ( "test to_float Capital One" >:: fun _ ->
+           test_to_float (List.nth fin_stocks 9) "Capital one"
+             [ 460.08; 159.97; 323.45; 221.71 ] );
+         ( "test to_float Charles Schwab" >:: fun _ ->
+           test_to_float (List.nth fin_stocks 10) "Charles schwab"
+             [ 199.89; 433.42; 390.73; 353.58 ] );
+         ( "test to_float Blackrock" >:: fun _ ->
+           test_to_float (List.nth fin_stocks 11) "Blackrock"
+             [ 473.75; 484.41; 233.95; 433.61 ] );
+         ( "test to_float American International" >:: fun _ ->
+           test_to_float (List.nth fin_stocks 12) "American international"
+             [ 219.67; 478.28; 176.9; 417.88 ] );
+         ( "test to_float Metlife" >:: fun _ ->
+           test_to_float (List.nth fin_stocks 13) "Metlife"
+             [ 180.31; 194.68; 354.59; 445.64 ] );
+         ( "test to_float CME Group" >:: fun _ ->
+           test_to_float (List.nth fin_stocks 14) "Cme group"
+             [ 349.82; 312.66; 299.36; 331.26 ] );
          ( "test of_float Apple" >:: fun _ ->
            test_of_float "Apple" [ 145.3; 146.2; 147.5; 148.0 ] );
          ( "test of_float Microsoft" >:: fun _ ->
@@ -295,6 +385,38 @@ let tests =
            test_of_float "Google" [ 2750.2; 2748.0; 2760.5; 2755.3 ] );
          ( "test of_float Amazon" >:: fun _ ->
            test_of_float "Amazon" [ 3335.5; 3340.1; 3338.0; 3342.2 ] );
+         ( "test of_float JP Morgan" >:: fun _ ->
+           test_of_float "Jp morgan" [ 328.66; 488.23; 370.07; 292.7 ] );
+         ( "test of_float Bank of America" >:: fun _ ->
+           test_of_float "Bank of america" [ 189.94; 355.76; 155.91; 325.06 ] );
+         ( "test of_float Wells Fargo" >:: fun _ ->
+           test_of_float "Wells fargo" [ 225.91; 200.61; 334.89; 190.99 ] );
+         ( "test of_float Citi Group" >:: fun _ ->
+           test_of_float "Citi group" [ 238.48; 223.81; 364.25; 433.55 ] );
+         ( "test of_float Goldman Sachs" >:: fun _ ->
+           test_of_float "Goldman sachs" [ 433.44; 128.63; 499.54; 308.67 ] );
+         ( "test of_float Morgan Stanley" >:: fun _ ->
+           test_of_float "Morgan stanley" [ 422.44; 460.85; 159.41; 372.54 ] );
+         ( "test of_float American Express" >:: fun _ ->
+           test_of_float "American express" [ 333.81; 116.17; 288.77; 140.37 ]
+         );
+         ( "test of_float US Bancorp" >:: fun _ ->
+           test_of_float "Us bancorp" [ 161.17; 290.72; 389.38; 152.9 ] );
+         ( "test of_float PNC financial" >:: fun _ ->
+           test_of_float "Pnc financial" [ 479.51; 451.17; 295.25; 213.26 ] );
+         ( "test of_float Capital One" >:: fun _ ->
+           test_of_float "Capital one" [ 460.08; 159.97; 323.45; 221.71 ] );
+         ( "test of_float Charles Schwab" >:: fun _ ->
+           test_of_float "Charles schwab" [ 199.89; 433.42; 390.73; 353.58 ] );
+         ( "test of_float Blackrock" >:: fun _ ->
+           test_of_float "Blackrock" [ 473.75; 484.41; 233.95; 433.61 ] );
+         ( "test of_float American International" >:: fun _ ->
+           test_of_float "American international"
+             [ 219.67; 478.28; 176.9; 417.88 ] );
+         ( "test of_float Metlife" >:: fun _ ->
+           test_of_float "Metlife" [ 180.31; 194.68; 354.59; 445.64 ] );
+         ( "test of_float CME Group" >:: fun _ ->
+           test_of_float "Cme group" [ 349.82; 312.66; 299.36; 331.26 ] );
          ( "test read_csv ../data/stocks.csv" >:: fun _ ->
            assert_equal
              [
@@ -304,6 +426,31 @@ let tests =
                Stock.of_float "Amazon" [ 3335.5; 3340.1; 3338.0; 3342.2 ];
              ]
              (Stock.read_csv "../data/stocks.csv") );
+         ( "test read_csv ../data/financial.csv" >:: fun _ ->
+           assert_equal
+             [
+               Stock.of_float "Jp morgan" [ 328.66; 488.23; 370.07; 292.7 ];
+               Stock.of_float "Bank of america"
+                 [ 189.94; 355.76; 155.91; 325.06 ];
+               Stock.of_float "Wells fargo" [ 225.91; 200.61; 334.89; 190.99 ];
+               Stock.of_float "Citi group" [ 238.48; 223.81; 364.25; 433.55 ];
+               Stock.of_float "Goldman sachs" [ 433.44; 128.63; 499.54; 308.67 ];
+               Stock.of_float "Morgan stanley"
+                 [ 422.44; 460.85; 159.41; 372.54 ];
+               Stock.of_float "American express"
+                 [ 333.81; 116.17; 288.77; 140.37 ];
+               Stock.of_float "Us bancorp" [ 161.17; 290.72; 389.38; 152.9 ];
+               Stock.of_float "Pnc financial" [ 479.51; 451.17; 295.25; 213.26 ];
+               Stock.of_float "Capital one" [ 460.08; 159.97; 323.45; 221.71 ];
+               Stock.of_float "Charles schwab"
+                 [ 199.89; 433.42; 390.73; 353.58 ];
+               Stock.of_float "Blackrock" [ 473.75; 484.41; 233.95; 433.61 ];
+               Stock.of_float "American international"
+                 [ 219.67; 478.28; 176.9; 417.88 ];
+               Stock.of_float "Metlife" [ 180.31; 194.68; 354.59; 445.64 ];
+               Stock.of_float "Cme group" [ 349.82; 312.66; 299.36; 331.26 ];
+             ]
+             (Stock.read_csv "../data/financial.csv") );
          (* Portfolio Module Tests are here*)
          ( "test create_portfolio" >:: fun _ ->
            test_create_portfolio 10000.0 10000.0 );
