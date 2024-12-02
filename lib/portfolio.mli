@@ -40,3 +40,7 @@ val get_balance : portfolio -> float
 val get_stocks : portfolio -> (string * int) list
 (** [get_stocks portfolio] returns the stock holdings in the user's portfolio as
     a list of (stock name, quantity). *)
+
+val update_balance : portfolio -> float -> portfolio
+(** [update_balance] artificially updates the portfolio's balance. Using this to
+    fix the error while loading stocks from a portfolio that decreases balance.*)
