@@ -5,6 +5,87 @@ include ANSITerminal
 module P = Finalproject.Portfolio
 module RP = Finalproject.Rt_portfolio
 
+let print_ascii_banner () =
+  print_newline ();
+  ANSITerminal.print_string [ ANSITerminal.yellow ]
+    "$$$$$$\\   $$$$$$\\   $$$$$$\\  $$\\      $$\\ $$\\             \
+     $$$$$$$$\\ $$$$$$$\\   $$$$$$\\  $$$$$$$\\  $$$$$$$$\\ $$$$$$$\\  \n";
+  ANSITerminal.print_string [ ANSITerminal.yellow ]
+    "$$  __$$\\ $$  __$$\\ $$  __$$\\ $$$\\    $$$ |$$ |            \\__$$  \
+     __|$$  __$$\\ $$  __$$\\ $$  __$$\\ $$  _____|$$  __$$\\ \n";
+  ANSITerminal.print_string [ ANSITerminal.yellow ]
+    "$$ /  $$ |$$ /  \\__|$$ /  $$ |$$$$\\  $$$$ |$$ |               $$ |   $$ \
+     |  $$ |$$ /  $$ |$$ |  $$ |$$ |      $$ |  $$ |\n";
+  ANSITerminal.print_string [ ANSITerminal.yellow ]
+    "$$ |  $$ |$$ |      $$$$$$$$ |$$\\$$\\$$ $$ |$$ |               $$ |   \
+     $$$$$$$  |$$$$$$$$ |$$ |  $$ |$$$$$\\    $$$$$$$  |\n";
+  ANSITerminal.print_string [ ANSITerminal.yellow ]
+    "$$ |  $$ |$$ |      $$  __$$ |$$ \\$$$  $$ |$$ |               $$ |   $$  \
+     __$$< $$  __$$ |$$ |  $$ |$$  __|   $$  __$$< \n";
+  ANSITerminal.print_string [ ANSITerminal.yellow ]
+    "$$ |  $$ |$$ |  $$\\ $$ |  $$ |$$ |\\$  /$$ |$$ |               $$ |   $$ \
+     |  $$ |$$ |  $$ |$$ |  $$ |$$ |      $$ |  $$ |\n";
+  ANSITerminal.print_string [ ANSITerminal.yellow ]
+    " $$$$$$  |\\$$$$$$  |$$ |  $$ |$$ | \\_/ $$ |$$$$$$$$\\          $$ |   \
+     $$ |  $$ |$$ |  $$ |$$$$$$$  |$$$$$$$$\\ $$ |  $$ |\n";
+  ANSITerminal.print_string [ ANSITerminal.yellow ]
+    " \\______/  \\______/ \\__|  \\__|\\__|     \\__|\\________|         \
+     \\__|   \\__|  \\__|\\__|  \\__|\\_______/ \\________|\\__|  \\__|\n";
+  ANSITerminal.print_string [ ANSITerminal.yellow ]
+    "                                                                                                                       \n";
+  ANSITerminal.print_string [ ANSITerminal.yellow ]
+    "                                                                                                                       \n";
+  print_newline ()
+
+let print_date_time () =
+  let time = Unix.localtime (Unix.time ()) in
+  let date_str =
+    Printf.sprintf "📅 %02d-%02d-%04d" time.tm_mday (time.tm_mon + 1)
+      (time.tm_year + 1900)
+  in
+  let time_str =
+    Printf.sprintf "⏰ %02d:%02d:%02d" time.tm_hour time.tm_min time.tm_sec
+  in
+  ANSITerminal.print_string [ ANSITerminal.Bold; ANSITerminal.red ] "Date: ";
+  ANSITerminal.print_string [ ANSITerminal.white ] (date_str ^ "   ");
+  ANSITerminal.print_string [ ANSITerminal.Bold; ANSITerminal.green ] "Time: ";
+  ANSITerminal.print_string [ ANSITerminal.white ] (time_str ^ "\n")
+
+let print_bordered_section title =
+  let border = String.make (String.length title + 4) '*' in
+  ANSITerminal.print_string [ ANSITerminal.white ] (border ^ "\n");
+  ANSITerminal.print_string [ ANSITerminal.white ] ("* " ^ title ^ " *\n");
+  ANSITerminal.print_string [ ANSITerminal.white ] (border ^ "\n")
+
+let print_landing_page () =
+  ANSITerminal.print_string [ ANSITerminal.white ]
+    "--------------------------------------------\n";
+  ANSITerminal.print_string [ ANSITerminal.yellow ]
+    "📊 Manage your portfolio efficiently.\n";
+  ANSITerminal.print_string [ ANSITerminal.magenta ]
+    "💰 Buy, sell, and view stocks with ease.\n";
+  ANSITerminal.print_string [ ANSITerminal.green ]
+    "📈 Stay up-to-date with the latest stock prices.\n";
+  ANSITerminal.print_string [ ANSITerminal.white ]
+    "--------------------------------------------\n";
+  ANSITerminal.print_string [ ANSITerminal.blue ] "✨ Powered by OCaml ✨\n";
+  print_newline ()
+
+let print_bordered_menu options =
+  let max_length =
+    List.fold_left (fun acc option -> max acc (String.length option)) 0 options
+  in
+  let border = String.make (max_length + 4) '-' in
+  ANSITerminal.print_string [ ANSITerminal.white ] (border ^ "\n");
+  List.iter
+    (fun option ->
+      ANSITerminal.print_string [ ANSITerminal.white ]
+        ("| " ^ option
+        ^ String.make (max_length - String.length option) ' '
+        ^ " |\n"))
+    options;
+  ANSITerminal.print_string [ ANSITerminal.white ] (border ^ "\n")
+
 let market =
   let filename = "data/stocks.csv" in
   try read_csv filename
@@ -52,7 +133,9 @@ let print_help_rt () =
 (**[balance_input_loop] takes in a mode (simulated/real-time) and prompts users
    for portfolio balance input and loops until they provide a valid input.*)
 let rec balance_input_loop mode =
-  print_endline ("Enter initial balance for the " ^ mode ^ " portfolio:");
+  ANSITerminal.print_string
+    [ ANSITerminal.Bold; ANSITerminal.cyan ]
+    ("Enter initial balance for the " ^ mode ^ " portfolio:\n");
   let input = read_line () in
   try
     let balance = float_of_string input in
@@ -65,7 +148,9 @@ let rec balance_input_loop mode =
 (**[quantity_input_loop] takes in a mode (buy/sell) and prompts users to enter a
    quantity input and loops until they provide a valid input.*)
 let rec quantity_input_loop mode =
-  print_endline ("Enter quantity to " ^ mode ^ ":");
+  ANSITerminal.print_string
+    [ ANSITerminal.Bold; ANSITerminal.cyan ]
+    ("Enter quantity to " ^ mode ^ ":\n");
   let input = read_line () in
   try
     let quantity = int_of_string input in
@@ -103,6 +188,10 @@ let print_num_enclosed num color =
     num;
   Stdlib.print_string ")"
 
+let print_horizontal_rule () =
+  ANSITerminal.print_string [ ANSITerminal.white ] (String.make 80 '-');
+  print_newline ()
+
 (**[purchase_loop] takes in a portfolio and prompts users to enter a stock
    ticker to buy and loops until they provide a valid input.*)
 let rec purchase_loop portfolio =
@@ -128,6 +217,11 @@ let rec purchase_loop portfolio =
   else print_endline "Purchase canceled."
 
 let () =
+  ANSITerminal.erase Screen;
+  ANSITerminal.set_cursor 1 1;
+  print_ascii_banner ();
+  print_date_time ();
+
   ANSITerminal.print_string
     [
       ANSITerminal.cyan;
@@ -137,7 +231,8 @@ let () =
       ANSITerminal.Bold;
     ]
     "\nWelcome to the Stock Query Interface!\n\n";
-  (* Portfolio functionality starts here *)
+  print_landing_page ();
+  print_horizontal_rule ();
   Stdlib.print_string "Would you like to create a portfolio? ";
   print_yes_no ();
   if String.lowercase_ascii (read_line ()) = "y" then (
@@ -236,6 +331,9 @@ let () =
         in
 
         let rec portfolio_menu new_stocks =
+          print_horizontal_rule ();
+          print_bordered_section "Main Menu";
+          print_horizontal_rule ();
           Stdlib.print_string "\nOptions: ";
           print_num_enclosed "1" ANSITerminal.yellow;
           Stdlib.print_string " Buy stock ";
@@ -271,12 +369,20 @@ let () =
                 match P.buy_stock !portfolio stock_name quantity new_stocks with
                 | Some updated_portfolio ->
                     portfolio := updated_portfolio;
-                    Printf.printf "Bought %d shares of %s\n" quantity
-                      (String.capitalize_ascii stock_name)
+                    ANSITerminal.print_string
+                      [ ANSITerminal.Bold; ANSITerminal.green ]
+                      (Printf.sprintf "✅ Successfully bought %d shares of %s\n"
+                         quantity
+                         (String.capitalize_ascii stock_name))
                 | None ->
-                    print_endline
-                      "Purchase failed. Check balance or stock availability."
-              else print_endline "Purchase canceled.";
+                    ANSITerminal.print_string
+                      [ ANSITerminal.Bold; ANSITerminal.red ]
+                      "❌ Purchase failed. Check balance or stock availability.\n"
+              else
+                ANSITerminal.print_string
+                  [ ANSITerminal.Bold; ANSITerminal.yellow ]
+                  "Purchase canceled.\n";
+              print_horizontal_rule ();
               portfolio_menu new_stocks
           | "2" ->
               let stocks = P.get_stocks !portfolio in
@@ -307,19 +413,34 @@ let () =
                   with
                   | Some updated_portfolio ->
                       portfolio := updated_portfolio;
-                      Printf.printf "Sold %d shares of %s\n" quantity
-                        (String.capitalize_ascii stock_name)
+                      ANSITerminal.print_string
+                        [ ANSITerminal.Bold; ANSITerminal.green ]
+                        (Printf.sprintf "✅ Successfully sold %d shares of %s\n"
+                           quantity
+                           (String.capitalize_ascii stock_name))
                   | None ->
-                      print_endline
-                        "Sale failed. Check if you have enough shares to sell \
-                         or if the stock exists."
-                else print_endline "Sale canceled.";
+                      ANSITerminal.print_string
+                        [ ANSITerminal.Bold; ANSITerminal.red ]
+                        "❌ Sale failed. Check if you have enough shares to \
+                         sell or if the stock exists.\n"
+                else
+                  ANSITerminal.print_string
+                    [ ANSITerminal.Bold; ANSITerminal.yellow ]
+                    "⚠️ Sale canceled.\n";
+                print_horizontal_rule ();
                 portfolio_menu new_stocks
           | "3" ->
+              print_horizontal_rule ();
+              ANSITerminal.print_string [ ANSITerminal.blue ]
+                "📊 Portfolio Summary\n";
+              print_horizontal_rule ();
+
               let summary, balance =
                 P.portfolio_summary !portfolio new_stocks
               in
               Printf.printf "Current balance: %.2f\n" balance;
+              ANSITerminal.print_string [ ANSITerminal.Bold ]
+                "Stock Holdings:\n";
               List.iter
                 (fun (name, qty, value) ->
                   Printf.printf "Stock: %s, Quantity: %d, Value: %.2f\n" name
@@ -331,7 +452,12 @@ let () =
                   0. summary
                 +. balance
               in
-              Printf.printf "Total value (balance + stock value): %.2f\n" sum;
+              print_newline ();
+              ANSITerminal.print_string [ ANSITerminal.Bold ]
+                "Total Portfolio Value: ";
+              ANSITerminal.print_string [ ANSITerminal.green ]
+                (Printf.sprintf "%.2f\n" sum);
+              print_horizontal_rule ();
               portfolio_menu new_stocks
           | "4" -> print_endline "Simulating earnings call."
           | "5" ->
@@ -351,6 +477,12 @@ let () =
         in
 
         let rec earnings_call stocks =
+          print_horizontal_rule ();
+          ANSITerminal.print_string
+            [ ANSITerminal.Bold; ANSITerminal.cyan ]
+            "📈 Earnings Call Update\n";
+          print_horizontal_rule ();
+
           let new_stocks =
             List.map
               (let rand = Random.int 10 in
@@ -415,7 +547,7 @@ let () =
           else if input = "2" then earnings_call new_stocks
           else exit 0
         in
-
+        print_horizontal_rule ();
         portfolio_menu new_stocks;
         earnings_call new_stocks
     | "2" ->
@@ -485,22 +617,36 @@ let () =
                 else print_endline "Sale canceled.";
                 rt_portfolio_menu ())
           | "3" ->
+              print_horizontal_rule ();
+              ANSITerminal.print_string
+                [ ANSITerminal.Bold; ANSITerminal.blue ]
+                "📊 Real-Time Portfolio Summary\n";
+              print_horizontal_rule ();
               let summary, balance =
                 Lwt_main.run (RP.rt_portfolio_summary !portfolio)
               in
               Printf.printf "Current balance: %.2f\n" balance;
+
+              ANSITerminal.print_string [ ANSITerminal.Bold ]
+                "Stock Holdings:\n";
               List.iter
                 (fun (name, qty, value) ->
                   Printf.printf "Stock: %s, Quantity: %d, Value: %.2f\n" name
                     qty value)
                 summary;
+
               let sum =
                 List.fold_left
                   (fun acc (_, _, value) -> acc +. value)
                   0. summary
                 +. balance
               in
-              Printf.printf "Total value (balance + stock value): %.2f\n" sum;
+              print_newline ();
+              ANSITerminal.print_string [ ANSITerminal.Bold ]
+                "Total Portfolio Value: ";
+              ANSITerminal.print_string [ ANSITerminal.green ]
+                (Printf.sprintf "%.2f\n" sum);
+              print_horizontal_rule ();
               rt_portfolio_menu ()
           | "4" ->
               print_endline "Exiting real-time portfolio. Goodbye!";
