@@ -71,7 +71,6 @@ let save_portfolio portfolio market filename =
   let csv_data =
     String.concat "\n" (("balance," ^ string_of_float balance) :: stock_lines)
   in
-  print_endline (string_of_float balance);
   (* Write to the file *)
   let oc = open_out filename in
   output_string oc csv_data;
@@ -111,7 +110,7 @@ let load_portfolio filename market =
     in
 
     (* Create and return the portfolio *)
-    let portfolio = create_portfolio balance in
+    let portfolio = create_portfolio 9999999999999999999. in
     update_balance
       (* keeps the balance the same instead of trying to actually buy the
          stocks*)

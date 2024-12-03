@@ -54,9 +54,9 @@ let load_rt_portfolio (filename : string) : Rt_portfolio.rt_portfolio option =
           | _ -> failwith "Malformed stock line in CSV file")
         stock_lines
     in
-    let empty_portfolio = create_rt_portfolio 9999999999999999. in
+    let empty_portfolio = create_rt_portfolio 999999999999999999999. in
     (*large number to make sure rebuying all stocks is possible - bit of a hack
-      but it's okay*)
+      but it's okay, similar to the simulated alternative*)
     let rec purchase_stocks (pf : rt_portfolio option) lst =
       match lst with
       | [] -> pf

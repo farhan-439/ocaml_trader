@@ -13,6 +13,9 @@ Installations:
 Running code:
 
 dune exec bin/main.exe
+If the title looks strange, please widen your terminal window.
 In simulation - use data/stocks.csv or your own data file to load preset stocks.
+
+- If you save your portfolio, make sure to use the same data file to load your portfolio!
 
 Thank you!
