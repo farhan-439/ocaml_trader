@@ -37,6 +37,11 @@ val rt_portfolio_balance : rt_portfolio -> float
 (** [rt_portfolio_balance rt_portfolio] returns the remaining cash balance in
     the rt_portfolio. *)
 
+val update_rt_balance : rt_portfolio -> float -> rt_portfolio
+(** [update_rt_balance] artificially updates the portfolio's balance. Using this
+    to fix the error while loading stocks from a portfolio that decreases
+    balance.*)
+
 val get_balance : rt_portfolio -> float
 (** [get_balance rt_portfolio] returns the balance in the user's rt_portfolio. *)
 

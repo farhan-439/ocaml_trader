@@ -94,5 +94,9 @@ let rt_portfolio_summary portfolio =
   (stock_summary, portfolio.balance)
 
 let rt_portfolio_balance portfolio = portfolio.balance
+
+let update_rt_balance (p : rt_portfolio) (b : float) =
+  { balance = b; stocks = p.stocks }
+
 let get_balance (p : rt_portfolio) = p.balance
 let get_stocks (p : rt_portfolio) = p.stocks
