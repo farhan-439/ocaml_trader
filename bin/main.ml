@@ -269,8 +269,9 @@ let () =
         let stock_data =
           try read_csv filename
           with _ ->
-            print_endline "Error - file could not be found.";
-            exit 0
+            print_endline
+              "Error - file could not be found. Using default data/stocks.csv.";
+            read_csv "data/stocks.csv"
         in
 
         print_endline "Enter a stock name to get prices:";
@@ -461,9 +462,16 @@ let () =
               portfolio_menu new_stocks
           | "4" -> print_endline "Simulating earnings call."
           | "5" ->
-              save_portfolio !portfolio market portfolio_file;
-              print_endline "Portfolio saved. Exiting program. Goodbye!";
-              exit 0
+              print_endline
+                "Would you like to save your portfolio before exiting?";
+              print_yes_no ();
+              if String.lowercase_ascii (read_line ()) = "y" then (
+                save_portfolio !portfolio market portfolio_file;
+                print_endline "Portfolio saved. Exiting program. Goodbye!";
+                exit 0)
+              else (
+                print_endline "Portfolio not saved. Exiting program. Goodbye!";
+                exit 0)
           | "6" ->
               print_help ();
               portfolio_menu new_stocks
@@ -649,8 +657,18 @@ let () =
               print_horizontal_rule ();
               rt_portfolio_menu ()
           | "4" ->
-              print_endline "Exiting real-time portfolio. Goodbye!";
-              exit 0
+              print_endline
+                "Would you like to save your portfolio before exiting?";
+              print_yes_no ();
+              if String.lowercase_ascii (read_line ()) = "y" then (
+                save_rt_portfolio !portfolio portfolio_file;
+                print_endline
+                  "Real-time portfolio saved. Exiting program. Goodbye!";
+                exit 0)
+              else (
+                print_endline
+                  "Real-time portfolio not saved. Exiting program. Goodbye!";
+                exit 0)
           | "5" ->
               (* Display help *)
               print_help_rt ();

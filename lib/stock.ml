@@ -6,7 +6,7 @@ let rec get_prices (name : string) (lst : t list) =
   let name = String.lowercase_ascii name in
   match lst with
   | h :: t -> if fst h = name then snd h else get_prices name t
-  | _ -> failwith "Stock not found."
+  | _ -> []
 
 (*returns the average of a float list to help with update_prices*)
 let avg_helper lst =
