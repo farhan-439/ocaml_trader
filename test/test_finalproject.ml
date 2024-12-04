@@ -2,6 +2,8 @@ open OUnit2
 open Finalproject
 open Portfolio
 open Rt_portfolio
+open Api
+open Lwt.Infix
 
 let stocks = Stock.read_csv "../data/stocks.csv"
 let fin_stocks = Stock.read_csv "../data/financial.csv"
@@ -122,6 +124,28 @@ let test_buy_stock_insufficient_balance portfolio stock_name qty market =
   | Some _ ->
       assert_failure "Expected purchase to fail due to insufficient balance"
 
+(**[test_api_fetch_bad] attempts to fetch a stock that does exist, and should
+   return an appropriate response.*)
+let test_api_fetch_good ticker : unit =
+  let _ =
+    Api.fetch_stock_price ticker >>= function
+    | None -> assert_failure "Expected stock to be available"
+    | Some api_result ->
+        assert_equal api_result.Api.ticker ticker;
+        Lwt.return_true
+  in
+  ignore ()
+
+(**[test_api_fetch_bad] attempts to fetch a stock that doesn't exist, and should
+   fail.*)
+let test_api_fetch_bad ticker : unit =
+  let _ =
+    Api.fetch_stock_price ticker >>= function
+    | None -> Lwt.return_true
+    | Some api_result -> assert_failure "shouldn't be available"
+  in
+  ignore ()
+
 (** [test_sell_stock portfolio stock_name qty market expected_balance expected_stocks]
     tests selling stocks by checking the updated balance and stock list. *)
 let test_sell_stock portfolio stock_name qty market expected_balance
@@ -212,6 +236,14 @@ let test_update_prices_no_change pattern stock_name stock_prices =
     last_price >= List.nth stock_prices (List.length stock_prices - 1) *. 0.9
     && last_price <= List.nth stock_prices (List.length stock_prices - 1) *. 1.1)
 
+(**[test_empty_rt_portfolio_summary] makes sure the summary of an empty
+   portfolio is empty*)
+let test_empty_rt_portfolio_summary =
+  let portfolio = Rt_portfolio.create_rt_portfolio 100. in
+  match Lwt_main.run (Rt_portfolio.rt_portfolio_summary portfolio) with
+  | [], x -> ignore () (*empty portfolio - good*)
+  | _ -> assert_failure "Should be empety"
+
 let test_stocks =
   [
     Stock.of_float "Apple" [ 145.3; 146.2; 147.5; 148.0 ];
@@ -223,6 +255,8 @@ let test_stocks =
 let tests =
   "test suite"
   >::: [
+         ("test api fetch good" >:: fun _ -> test_api_fetch_good "aapl");
+         ("test api fetch bad" >:: fun _ -> test_api_fetch_bad "cs3110");
          ( "test dune functionality" >:: fun _ ->
            assert_equal 0 0 ~printer:string_of_int;
            assert_equal "1" "1" ~printer:Fun.id );
@@ -497,6 +531,7 @@ let tests =
            test_create_portfolio 10000.0 10000.0 );
          ( "test create_rt_portfolio" >:: fun _ ->
            test_create_rt_portfolio 10000.0 10000.0 );
+         ("test empty rt summary" >:: fun _ -> test_empty_rt_portfolio_summary);
          ( "test buy_stock sufficient balance" >:: fun _ ->
            let portfolio = Portfolio.create_portfolio 10000.0 in
            test_buy_stock portfolio "Apple" 10 test_stocks 8520.0

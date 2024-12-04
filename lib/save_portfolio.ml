@@ -2,7 +2,7 @@ open Stock
 open Portfolio
 
 let serialize_portfolio portfolio market =
-  let balance = portfolio_balance portfolio in
+  let balance = get_balance portfolio in
   let stocks = get_stocks portfolio in
   let stock_data =
     List.map
@@ -51,7 +51,7 @@ let deserialize_portfolio data market =
 
 let save_portfolio portfolio market filename =
   (* Fetch the balance and stocks *)
-  let balance = portfolio_balance portfolio in
+  let balance = get_balance portfolio in
   let stocks = get_stocks portfolio in
 
   (* Construct the CSV data *)

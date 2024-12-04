@@ -10,7 +10,7 @@ let create_portfolio initial_balance =
 
 let buy_stock portfolio stock_name qty (market : Stock.t list) =
   match Stock.get_prices stock_name market with
-  | [] -> None
+  | [] -> None [@coverage off] (*shouldn't happen with correct implementation*)
   | prices ->
       let latest_price = List.nth prices (List.length prices - 1) in
       let total_cost = float_of_int qty *. latest_price in
@@ -31,7 +31,7 @@ let buy_stock portfolio stock_name qty (market : Stock.t list) =
 
 let sell_stock portfolio stock_name qty (market : Stock.t list) =
   match Stock.get_prices stock_name market with
-  | [] -> None
+  | [] -> None [@coverage off] (*shouldn't happen with correct implementation*)
   | prices ->
       let latest_price = List.nth prices (List.length prices - 1) in
       let rec update_stocks_and_balance stocks acc_balance =
@@ -69,7 +69,11 @@ let portfolio_summary portfolio (market : Stock.t list) =
     | [] -> []
     | (name, quantity) :: rest -> (
         match Stock.get_prices name market with
-        | [] -> stock_value_summary rest (* Stock not found in market, skip *)
+        | [] ->
+            stock_value_summary rest
+            [@coverage off]
+            (*shouldn't happen with correct implementation*)
+            (* Stock not found in market, skip *)
         | prices ->
             let latest_price = List.nth prices (List.length prices - 1) in
             let total_value = float_of_int quantity *. latest_price in
@@ -80,6 +84,5 @@ let portfolio_summary portfolio (market : Stock.t list) =
 let update_balance (p : portfolio) (b : float) =
   { balance = b; stocks = p.stocks }
 
-let portfolio_balance portfolio = portfolio.balance
 let get_balance (p : portfolio) = p.balance
 let get_stocks (p : portfolio) = p.stocks

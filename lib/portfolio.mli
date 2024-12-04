@@ -30,10 +30,6 @@ val portfolio_summary :
     tuple of the stock name, quantity, and total value, while the balance is a
     separate float value. *)
 
-val portfolio_balance : portfolio -> float
-(** [portfolio_balance portfolio] returns the remaining cash balance in the
-    portfolio. *)
-
 val get_balance : portfolio -> float
 (** [get_balance portfolio] returns the balance in the user's portfolio. *)
 

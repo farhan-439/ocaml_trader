@@ -93,8 +93,6 @@ let rt_portfolio_summary portfolio =
   stock_value_summary portfolio.stocks >|= fun stock_summary ->
   (stock_summary, portfolio.balance)
 
-let rt_portfolio_balance portfolio = portfolio.balance
-
 let update_rt_balance (p : rt_portfolio) (b : float) =
   { balance = b; stocks = p.stocks }
 

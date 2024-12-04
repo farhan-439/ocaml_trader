@@ -33,10 +33,6 @@ val rt_portfolio_summary :
     tuple of the stock name, quantity, and total value, while the balance is a
     separate float value. *)
 
-val rt_portfolio_balance : rt_portfolio -> float
-(** [rt_portfolio_balance rt_portfolio] returns the remaining cash balance in
-    the rt_portfolio. *)
-
 val update_rt_balance : rt_portfolio -> float -> rt_portfolio
 (** [update_rt_balance] artificially updates the portfolio's balance. Using this
     to fix the error while loading stocks from a portfolio that decreases
