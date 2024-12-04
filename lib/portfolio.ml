@@ -29,27 +29,6 @@ let buy_stock portfolio stock_name qty (market : Stock.t list) =
           }
       else None
 
-let buy_stock portfolio stock_name qty (market : Stock.t list) =
-  match Stock.get_prices stock_name market with
-  | [] -> None
-  | prices ->
-      let latest_price = List.nth prices (List.length prices - 1) in
-      let total_cost = float_of_int qty *. latest_price in
-      if portfolio.balance >= total_cost then
-        let rec update_stocks stocks =
-          match stocks with
-          | [] -> [ (stock_name, qty) ]
-          | (name, quantity) :: rest ->
-              if name = stock_name then (name, quantity + qty) :: rest
-              else (name, quantity) :: update_stocks rest
-        in
-        Some
-          {
-            balance = portfolio.balance -. total_cost;
-            stocks = update_stocks portfolio.stocks;
-          }
-      else None
-
 let sell_stock portfolio stock_name qty (market : Stock.t list) =
   match Stock.get_prices stock_name market with
   | [] -> None
