@@ -10,6 +10,8 @@ let create_rt_portfolio initial_balance =
   { balance = initial_balance; stocks = [] }
 
 let buy_stock portfolio stock_name qty =
+  if qty <= 0 then Lwt.return_none
+  else
   Api.fetch_stock_price stock_name >>= function
   | None -> Lwt.return_none (* Stock price not available *)
   | Some api_result -> (
