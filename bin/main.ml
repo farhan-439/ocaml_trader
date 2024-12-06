@@ -305,7 +305,7 @@ let () =
                 ANSITerminal.Bold;
                 ANSITerminal.Underlined;
               ]
-              ((x |> to_float |> fst |> String.capitalize_ascii) ^ " Stock:");
+              ((x |> to_float |> fst |> String.capitalize_ascii) ^ ":");
             Stdlib.print_string " ";
             x |> to_float |> snd |> print_prices)
           new_stocks;
@@ -444,7 +444,7 @@ let () =
                 "Stock Holdings:\n";
               List.iter
                 (fun (name, qty, value) ->
-                  Printf.printf "Stock: %s, Quantity: %d, Value: %.2f\n" name
+                  Printf.printf ": %s, Quantity: %d, Value: %.2f\n" name
                     qty value)
                 summary;
               let sum =
@@ -639,7 +639,7 @@ let () =
                 "Stock Holdings:\n";
               List.iter
                 (fun (name, qty, value) ->
-                  Printf.printf "Stock: %s, Quantity: %d, Value: %.2f\n" name
+                  Printf.printf ": %s, Quantity: %d, Value: %.2f\n" name
                     qty value)
                 summary;
 
