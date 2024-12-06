@@ -24,3 +24,5 @@ let fetch_stock_price ticker =
     | Some p -> Some { ticker; price = Some p }
     | None -> None
   else Lwt.return_none
+
+  
