@@ -304,154 +304,146 @@ let tests =
            test_get_prices "American express"
              [ 333.81; 116.17; 288.77; 140.37 ]
              "../data/financial.csv" );
-
-( "test get_prices Ally Financial" >:: fun _ ->
-  test_get_prices "Ally financial"
-    [300.12; 312.45; 295.00; 305.6]
-    "../data/financial.csv" );
-( "test get_prices BB&T Corp" >:: fun _ ->
-  test_get_prices "Bb&t corp"
-    [200.45; 250.10; 210.3; 220.5]
-    "../data/financial.csv" );
-( "test get_prices Fifth Third Bancorp" >:: fun _ ->
-  test_get_prices "Fifth third bancorp"
-    [185.4; 190.6; 179.2; 188.5]
-    "../data/financial.csv" );
-( "test get_prices Regions Financial" >:: fun _ ->
-  test_get_prices "Regions financial"
-    [145.9; 150.4; 143.0; 149.9]
-    "../data/financial.csv" );
-( "test get_prices KeyCorp" >:: fun _ ->
-  test_get_prices "Keycorp"
-    [190.2; 210.8; 205.1; 202.3]
-    "../data/financial.csv" );
-( "test get_prices M&T Bank" >:: fun _ ->
-  test_get_prices "M&t bank"
-    [299.3; 310.6; 305.4; 315.2]
-    "../data/financial.csv" );
-( "test get_prices SunTrust Banks" >:: fun _ ->
-  test_get_prices "Suntrust banks"
-    [270.5; 265.9; 275.0; 260.1]
-    "../data/financial.csv" );
-( "test get_prices Northern Trust" >:: fun _ ->
-  test_get_prices "Northern trust"
-    [360.4; 358.6; 362.7; 355.5]
-    "../data/financial.csv" );
-( "test get_prices State Street" >:: fun _ ->
-  test_get_prices "State street"
-    [410.0; 415.2; 407.3; 420.1]
-    "../data/financial.csv" );
-( "test get_prices TD Bank" >:: fun _ ->
-  test_get_prices "Td bank"
-    [375.5; 380.7; 385.2; 390.6]
-    "../data/financial.csv" );
-
-(* update_prices tests for new entries (varying patterns) *)
-( "test update_prices high Ally Financial" >:: fun _ ->
-  test_update_prices "high" "Ally financial"
-    [300.12; 312.45; 295.00; 305.6] );
-( "test update_prices mid BB&T Corp" >:: fun _ ->
-  test_update_prices "mid" "Bb&t corp"
-    [200.45; 250.10; 210.3; 220.5] );
-( "test update_prices low Fifth Third Bancorp" >:: fun _ ->
-  test_update_prices "low" "Fifth third bancorp"
-    [185.4; 190.6; 179.2; 188.5] );
-( "test update_prices high Regions Financial" >:: fun _ ->
-  test_update_prices "high" "Regions financial"
-    [145.9; 150.4; 143.0; 149.9] );
-( "test update_prices mid KeyCorp" >:: fun _ ->
-  test_update_prices "mid" "Keycorp"
-    [190.2; 210.8; 205.1; 202.3] );
-( "test update_prices low M&T Bank" >:: fun _ ->
-  test_update_prices "low" "M&t bank"
-    [299.3; 310.6; 305.4; 315.2] );
-( "test update_prices high SunTrust Banks" >:: fun _ ->
-  test_update_prices "high" "Suntrust banks"
-    [270.5; 265.9; 275.0; 260.1] );
-( "test update_prices mid Northern Trust" >:: fun _ ->
-  test_update_prices "mid" "Northern trust"
-    [360.4; 358.6; 362.7; 355.5] );
-( "test update_prices low State Street" >:: fun _ ->
-  test_update_prices "low" "State street"
-    [410.0; 415.2; 407.3; 420.1] );
-( "test update_prices high TD Bank" >:: fun _ ->
-  test_update_prices "high" "Td bank"
-    [375.5; 380.7; 385.2; 390.6] );
-
-(* to_float tests for new entries *)
-( "test to_float Ally Financial" >:: fun _ ->
-  test_to_float
-    (List.nth (Stock.read_csv "../data/financial.csv") 15)
-    "Ally financial"
-    [300.12; 312.45; 295.00; 305.6] );
-( "test to_float BB&T Corp" >:: fun _ ->
-  test_to_float
-    (List.nth (Stock.read_csv "../data/financial.csv") 16)
-    "Bb&t corp"
-    [200.45; 250.10; 210.3; 220.5] );
-( "test to_float Fifth Third Bancorp" >:: fun _ ->
-  test_to_float
-    (List.nth (Stock.read_csv "../data/financial.csv") 17)
-    "Fifth third bancorp"
-    [185.4; 190.6; 179.2; 188.5] );
-( "test to_float Regions Financial" >:: fun _ ->
-  test_to_float
-    (List.nth (Stock.read_csv "../data/financial.csv") 18)
-    "Regions financial"
-    [145.9; 150.4; 143.0; 149.9] );
-( "test to_float KeyCorp" >:: fun _ ->
-  test_to_float
-    (List.nth (Stock.read_csv "../data/financial.csv") 19)
-    "Keycorp"
-    [190.2; 210.8; 205.1; 202.3] );
-( "test to_float M&T Bank" >:: fun _ ->
-  test_to_float
-    (List.nth (Stock.read_csv "../data/financial.csv") 20)
-    "M&t bank"
-    [299.3; 310.6; 305.4; 315.2] );
-( "test to_float SunTrust Banks" >:: fun _ ->
-  test_to_float
-    (List.nth (Stock.read_csv "../data/financial.csv") 21)
-    "Suntrust banks"
-    [270.5; 265.9; 275.0; 260.1] );
-( "test to_float Northern Trust" >:: fun _ ->
-  test_to_float
-    (List.nth (Stock.read_csv "../data/financial.csv") 22)
-    "Northern trust"
-    [360.4; 358.6; 362.7; 355.5] );
-( "test to_float State Street" >:: fun _ ->
-  test_to_float
-    (List.nth (Stock.read_csv "../data/financial.csv") 23)
-    "State street"
-    [410.0; 415.2; 407.3; 420.1] );
-( "test to_float TD Bank" >:: fun _ ->
-  test_to_float
-    (List.nth (Stock.read_csv "../data/financial.csv") 24)
-    "Td bank"
-    [375.5; 380.7; 385.2; 390.6] );
-
-(* of_float tests for new entries *)
-( "test of_float Ally Financial" >:: fun _ ->
-  test_of_float "Ally financial" [300.12; 312.45; 295.00; 305.6] );
-( "test of_float BB&T Corp" >:: fun _ ->
-  test_of_float "Bb&t corp" [200.45; 250.10; 210.3; 220.5] );
-( "test of_float Fifth Third Bancorp" >:: fun _ ->
-  test_of_float "Fifth third bancorp" [185.4; 190.6; 179.2; 188.5] );
-( "test of_float Regions Financial" >:: fun _ ->
-  test_of_float "Regions financial" [145.9; 150.4; 143.0; 149.9] );
-( "test of_float KeyCorp" >:: fun _ ->
-  test_of_float "Keycorp" [190.2; 210.8; 205.1; 202.3] );
-( "test of_float M&T Bank" >:: fun _ ->
-  test_of_float "M&t bank" [299.3; 310.6; 305.4; 315.2] );
-( "test of_float SunTrust Banks" >:: fun _ ->
-  test_of_float "Suntrust banks" [270.5; 265.9; 275.0; 260.1] );
-( "test of_float Northern Trust" >:: fun _ ->
-  test_of_float "Northern trust" [360.4; 358.6; 362.7; 355.5] );
-( "test of_float State Street" >:: fun _ ->
-  test_of_float "State street" [410.0; 415.2; 407.3; 420.1] );
-( "test of_float TD Bank" >:: fun _ ->
-  test_of_float "Td bank" [375.5; 380.7; 385.2; 390.6] );
-
+         ( "test get_prices Ally Financial" >:: fun _ ->
+           test_get_prices "Ally financial"
+             [ 300.12; 312.45; 295.00; 305.6 ]
+             "../data/financial.csv" );
+         ( "test get_prices BB&T Corp" >:: fun _ ->
+           test_get_prices "Bb&t corp"
+             [ 200.45; 250.10; 210.3; 220.5 ]
+             "../data/financial.csv" );
+         ( "test get_prices Fifth Third Bancorp" >:: fun _ ->
+           test_get_prices "Fifth third bancorp"
+             [ 185.4; 190.6; 179.2; 188.5 ]
+             "../data/financial.csv" );
+         ( "test get_prices Regions Financial" >:: fun _ ->
+           test_get_prices "Regions financial"
+             [ 145.9; 150.4; 143.0; 149.9 ]
+             "../data/financial.csv" );
+         ( "test get_prices KeyCorp" >:: fun _ ->
+           test_get_prices "Keycorp"
+             [ 190.2; 210.8; 205.1; 202.3 ]
+             "../data/financial.csv" );
+         ( "test get_prices M&T Bank" >:: fun _ ->
+           test_get_prices "M&t bank"
+             [ 299.3; 310.6; 305.4; 315.2 ]
+             "../data/financial.csv" );
+         ( "test get_prices SunTrust Banks" >:: fun _ ->
+           test_get_prices "Suntrust banks"
+             [ 270.5; 265.9; 275.0; 260.1 ]
+             "../data/financial.csv" );
+         ( "test get_prices Northern Trust" >:: fun _ ->
+           test_get_prices "Northern trust"
+             [ 360.4; 358.6; 362.7; 355.5 ]
+             "../data/financial.csv" );
+         ( "test get_prices State Street" >:: fun _ ->
+           test_get_prices "State street"
+             [ 410.0; 415.2; 407.3; 420.1 ]
+             "../data/financial.csv" );
+         ( "test get_prices TD Bank" >:: fun _ ->
+           test_get_prices "Td bank"
+             [ 375.5; 380.7; 385.2; 390.6 ]
+             "../data/financial.csv" );
+         (* update_prices tests for new entries (varying patterns) *)
+         ( "test update_prices high Ally Financial" >:: fun _ ->
+           test_update_prices "high" "Ally financial"
+             [ 300.12; 312.45; 295.00; 305.6 ] );
+         ( "test update_prices mid BB&T Corp" >:: fun _ ->
+           test_update_prices "mid" "Bb&t corp" [ 200.45; 250.10; 210.3; 220.5 ]
+         );
+         ( "test update_prices low Fifth Third Bancorp" >:: fun _ ->
+           test_update_prices "low" "Fifth third bancorp"
+             [ 185.4; 190.6; 179.2; 188.5 ] );
+         ( "test update_prices high Regions Financial" >:: fun _ ->
+           test_update_prices "high" "Regions financial"
+             [ 145.9; 150.4; 143.0; 149.9 ] );
+         ( "test update_prices mid KeyCorp" >:: fun _ ->
+           test_update_prices "mid" "Keycorp" [ 190.2; 210.8; 205.1; 202.3 ] );
+         ( "test update_prices low M&T Bank" >:: fun _ ->
+           test_update_prices "low" "M&t bank" [ 299.3; 310.6; 305.4; 315.2 ] );
+         ( "test update_prices high SunTrust Banks" >:: fun _ ->
+           test_update_prices "high" "Suntrust banks"
+             [ 270.5; 265.9; 275.0; 260.1 ] );
+         ( "test update_prices mid Northern Trust" >:: fun _ ->
+           test_update_prices "mid" "Northern trust"
+             [ 360.4; 358.6; 362.7; 355.5 ] );
+         ( "test update_prices low State Street" >:: fun _ ->
+           test_update_prices "low" "State street"
+             [ 410.0; 415.2; 407.3; 420.1 ] );
+         ( "test update_prices high TD Bank" >:: fun _ ->
+           test_update_prices "high" "Td bank" [ 375.5; 380.7; 385.2; 390.6 ] );
+         (* to_float tests for new entries *)
+         ( "test to_float Ally Financial" >:: fun _ ->
+           test_to_float
+             (List.nth (Stock.read_csv "../data/financial.csv") 15)
+             "Ally financial"
+             [ 300.12; 312.45; 295.00; 305.6 ] );
+         ( "test to_float BB&T Corp" >:: fun _ ->
+           test_to_float
+             (List.nth (Stock.read_csv "../data/financial.csv") 16)
+             "Bb&t corp"
+             [ 200.45; 250.10; 210.3; 220.5 ] );
+         ( "test to_float Fifth Third Bancorp" >:: fun _ ->
+           test_to_float
+             (List.nth (Stock.read_csv "../data/financial.csv") 17)
+             "Fifth third bancorp"
+             [ 185.4; 190.6; 179.2; 188.5 ] );
+         ( "test to_float Regions Financial" >:: fun _ ->
+           test_to_float
+             (List.nth (Stock.read_csv "../data/financial.csv") 18)
+             "Regions financial"
+             [ 145.9; 150.4; 143.0; 149.9 ] );
+         ( "test to_float KeyCorp" >:: fun _ ->
+           test_to_float
+             (List.nth (Stock.read_csv "../data/financial.csv") 19)
+             "Keycorp"
+             [ 190.2; 210.8; 205.1; 202.3 ] );
+         ( "test to_float M&T Bank" >:: fun _ ->
+           test_to_float
+             (List.nth (Stock.read_csv "../data/financial.csv") 20)
+             "M&t bank"
+             [ 299.3; 310.6; 305.4; 315.2 ] );
+         ( "test to_float SunTrust Banks" >:: fun _ ->
+           test_to_float
+             (List.nth (Stock.read_csv "../data/financial.csv") 21)
+             "Suntrust banks"
+             [ 270.5; 265.9; 275.0; 260.1 ] );
+         ( "test to_float Northern Trust" >:: fun _ ->
+           test_to_float
+             (List.nth (Stock.read_csv "../data/financial.csv") 22)
+             "Northern trust"
+             [ 360.4; 358.6; 362.7; 355.5 ] );
+         ( "test to_float State Street" >:: fun _ ->
+           test_to_float
+             (List.nth (Stock.read_csv "../data/financial.csv") 23)
+             "State street"
+             [ 410.0; 415.2; 407.3; 420.1 ] );
+         ( "test to_float TD Bank" >:: fun _ ->
+           test_to_float
+             (List.nth (Stock.read_csv "../data/financial.csv") 24)
+             "Td bank"
+             [ 375.5; 380.7; 385.2; 390.6 ] );
+         (* of_float tests for new entries *)
+         ( "test of_float Ally Financial" >:: fun _ ->
+           test_of_float "Ally financial" [ 300.12; 312.45; 295.00; 305.6 ] );
+         ( "test of_float BB&T Corp" >:: fun _ ->
+           test_of_float "Bb&t corp" [ 200.45; 250.10; 210.3; 220.5 ] );
+         ( "test of_float Fifth Third Bancorp" >:: fun _ ->
+           test_of_float "Fifth third bancorp" [ 185.4; 190.6; 179.2; 188.5 ] );
+         ( "test of_float Regions Financial" >:: fun _ ->
+           test_of_float "Regions financial" [ 145.9; 150.4; 143.0; 149.9 ] );
+         ( "test of_float KeyCorp" >:: fun _ ->
+           test_of_float "Keycorp" [ 190.2; 210.8; 205.1; 202.3 ] );
+         ( "test of_float M&T Bank" >:: fun _ ->
+           test_of_float "M&t bank" [ 299.3; 310.6; 305.4; 315.2 ] );
+         ( "test of_float SunTrust Banks" >:: fun _ ->
+           test_of_float "Suntrust banks" [ 270.5; 265.9; 275.0; 260.1 ] );
+         ( "test of_float Northern Trust" >:: fun _ ->
+           test_of_float "Northern trust" [ 360.4; 358.6; 362.7; 355.5 ] );
+         ( "test of_float State Street" >:: fun _ ->
+           test_of_float "State street" [ 410.0; 415.2; 407.3; 420.1 ] );
+         ( "test of_float TD Bank" >:: fun _ ->
+           test_of_float "Td bank" [ 375.5; 380.7; 385.2; 390.6 ] );
          ( "test get_prices US Bancorp" >:: fun _ ->
            test_get_prices "US bancorp"
              [ 161.17; 290.72; 389.38; 152.9 ]
@@ -652,36 +644,40 @@ let tests =
          ( "test read_csv ../data/financial.csv" >:: fun _ ->
            assert_equal
              [
-              Stock.of_float "Jp morgan" [ 328.66; 488.23; 370.07; 292.7 ];
-              Stock.of_float "Bank of america" [ 189.94; 355.76; 155.91; 325.06 ];
-              Stock.of_float "Wells fargo" [ 225.91; 200.61; 334.89; 190.99 ];
-              Stock.of_float "Citi group" [ 238.48; 223.81; 364.25; 433.55 ];
-              Stock.of_float "Goldman sachs" [ 433.44; 128.63; 499.54; 308.67 ];
-              Stock.of_float "Morgan stanley" [ 422.44; 460.85; 159.41; 372.54 ];
-              Stock.of_float "American express"
-                [ 333.81; 116.17; 288.77; 140.37 ];
-              Stock.of_float "Us bancorp" [ 161.17; 290.72; 389.38; 152.9 ];
-              Stock.of_float "Pnc financial" [ 479.51; 451.17; 295.25; 213.26 ];
-              Stock.of_float "Capital one" [ 460.08; 159.97; 323.45; 221.71 ];
-              Stock.of_float "Charles schwab" [ 199.89; 433.42; 390.73; 353.58 ];
-              Stock.of_float "Blackrock" [ 473.75; 484.41; 233.95; 433.61 ];
-              Stock.of_float "American international" [ 219.67; 478.28; 176.9; 417.88 ];
-              Stock.of_float "Metlife" [ 180.31; 194.68; 354.59; 445.64 ];
-              Stock.of_float "Cme group" [ 349.82; 312.66; 299.36; 331.26 ];
-              (* Newly added lines *)
-              Stock.of_float "Ally financial" [300.12; 312.45; 295.00; 305.6];
-              Stock.of_float "Bb&t corp" [200.45; 250.10; 210.3; 220.5];
-              Stock.of_float "Fifth third bancorp" [185.4; 190.6; 179.2; 188.5];
-              Stock.of_float "Regions financial" [145.9; 150.4; 143.0; 149.9];
-              Stock.of_float "Keycorp" [190.2; 210.8; 205.1; 202.3];
-              Stock.of_float "M&t bank" [299.3; 310.6; 305.4; 315.2];
-              Stock.of_float "Suntrust banks" [270.5; 265.9; 275.0; 260.1];
-              Stock.of_float "Northern trust" [360.4; 358.6; 362.7; 355.5];
-              Stock.of_float "State street" [410.0; 415.2; 407.3; 420.1];
-              Stock.of_float "Td bank" [375.5; 380.7; 385.2; 390.6];
+               Stock.of_float "Jp morgan" [ 328.66; 488.23; 370.07; 292.7 ];
+               Stock.of_float "Bank of america"
+                 [ 189.94; 355.76; 155.91; 325.06 ];
+               Stock.of_float "Wells fargo" [ 225.91; 200.61; 334.89; 190.99 ];
+               Stock.of_float "Citi group" [ 238.48; 223.81; 364.25; 433.55 ];
+               Stock.of_float "Goldman sachs" [ 433.44; 128.63; 499.54; 308.67 ];
+               Stock.of_float "Morgan stanley"
+                 [ 422.44; 460.85; 159.41; 372.54 ];
+               Stock.of_float "American express"
+                 [ 333.81; 116.17; 288.77; 140.37 ];
+               Stock.of_float "Us bancorp" [ 161.17; 290.72; 389.38; 152.9 ];
+               Stock.of_float "Pnc financial" [ 479.51; 451.17; 295.25; 213.26 ];
+               Stock.of_float "Capital one" [ 460.08; 159.97; 323.45; 221.71 ];
+               Stock.of_float "Charles schwab"
+                 [ 199.89; 433.42; 390.73; 353.58 ];
+               Stock.of_float "Blackrock" [ 473.75; 484.41; 233.95; 433.61 ];
+               Stock.of_float "American international"
+                 [ 219.67; 478.28; 176.9; 417.88 ];
+               Stock.of_float "Metlife" [ 180.31; 194.68; 354.59; 445.64 ];
+               Stock.of_float "Cme group" [ 349.82; 312.66; 299.36; 331.26 ];
+               (* Newly added lines *)
+               Stock.of_float "Ally financial" [ 300.12; 312.45; 295.00; 305.6 ];
+               Stock.of_float "Bb&t corp" [ 200.45; 250.10; 210.3; 220.5 ];
+               Stock.of_float "Fifth third bancorp"
+                 [ 185.4; 190.6; 179.2; 188.5 ];
+               Stock.of_float "Regions financial" [ 145.9; 150.4; 143.0; 149.9 ];
+               Stock.of_float "Keycorp" [ 190.2; 210.8; 205.1; 202.3 ];
+               Stock.of_float "M&t bank" [ 299.3; 310.6; 305.4; 315.2 ];
+               Stock.of_float "Suntrust banks" [ 270.5; 265.9; 275.0; 260.1 ];
+               Stock.of_float "Northern trust" [ 360.4; 358.6; 362.7; 355.5 ];
+               Stock.of_float "State street" [ 410.0; 415.2; 407.3; 420.1 ];
+               Stock.of_float "Td bank" [ 375.5; 380.7; 385.2; 390.6 ];
              ]
              (Stock.read_csv "../data/financial.csv") );
-
          (* Portfolio Module Tests are here*)
          ( "test create_portfolio" >:: fun _ ->
            test_create_portfolio 10000.0 10000.0 );

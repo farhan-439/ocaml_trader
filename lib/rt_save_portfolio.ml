@@ -67,7 +67,6 @@ let load_rt_portfolio (filename : string) : Rt_portfolio.rt_portfolio option =
               purchase_stocks (Lwt_main.run (buy_stock portfolio stock qty)) t)
     in
     let full_portfolio = purchase_stocks (Some empty_portfolio) stocks in
-
     match full_portfolio with
     | Some x -> Some (update_rt_balance x balance)
     | None -> None
