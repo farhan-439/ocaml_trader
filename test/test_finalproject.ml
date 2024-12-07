@@ -461,6 +461,106 @@ let test_stocks =
     Stock.of_float "Amazon" [ 3335.5; 3340.1; 3338.0; 3342.2 ];
   ]
 
+module Api = struct
+  type stock_info = {
+    ticker : string;
+    price : float option;
+  }
+
+  let fetch_stock_price stock_name =
+    let mock_data =
+      [ ("AAPL", Some 150.0); ("TSLA", Some 700.0); ("GOOG", None) ]
+    in
+    Lwt.return
+      (List.assoc_opt (String.uppercase_ascii stock_name) mock_data
+      |> Option.map (fun price -> { ticker = stock_name; price }))
+end
+
+let test_1buy_stock _ =
+  let portfolio = create_rt_portfolio 1000.0 in
+  let stock_name = "AAPL" in
+  let qty = 5 in
+  let test_lwt =
+    buy_stock portfolio stock_name qty >>= function
+    | None ->
+        Printf.printf
+          "Failed to buy stock: insufficient balance or stock not available\n";
+        Lwt.return ()
+    | Some updated_portfolio ->
+        Printf.printf "Successfully bought %d shares of %s\n" qty stock_name;
+        Printf.printf "New balance: %.2f\n" updated_portfolio.balance;
+        Lwt.return ()
+  in
+  Lwt.async (fun () -> test_lwt)
+
+let test_1sell_stock _ =
+  let portfolio =
+    { balance = 1000.0; stocks = [ ("AAPL", 10); ("TSLA", 2) ] }
+  in
+  let stock_name = "AAPL" in
+  let qty = 3 in
+  let test_lwt =
+    sell_stock portfolio stock_name qty >>= function
+    | None ->
+        Printf.printf
+          "Failed to sell stock: insufficient shares or stock not available\n";
+        Lwt.return ()
+    | Some updated_portfolio ->
+        Printf.printf "Successfully sold %d shares of %s\n" qty stock_name;
+        Printf.printf "New balance: %.2f\n" updated_portfolio.balance;
+        Lwt.return ()
+  in
+  Lwt.async (fun () -> test_lwt)
+
+let test_rt_portfolio_summary _ =
+  let portfolio =
+    { balance = 1000.0; stocks = [ ("AAPL", 10); ("TSLA", 5) ] }
+  in
+  let test_lwt =
+    rt_portfolio_summary portfolio >>= fun (stock_summary, balance) ->
+    Printf.printf "Portfolio Summary:\n";
+    List.iter
+      (fun (name, qty, value) ->
+        Printf.printf "%s: %d shares, Total Value: %.2f\n" name qty value)
+      stock_summary;
+    Printf.printf "Balance: %.2f\n" balance;
+    Lwt.return ()
+  in
+  Lwt.async (fun () -> test_lwt)
+
+let mock_fetch_stock_price ticker =
+  if ticker = "AAPL" then Some { ticker = "AAPL"; price = Some 150.0 } else None
+
+let test_fetch_valid_api _ =
+  let ticker = "AAPL" in
+  match mock_fetch_stock_price ticker with
+  | None -> assert_failure "API call failed or returned None"
+  | Some stock -> (
+      assert_equal ~printer:(fun s -> s) "AAPL" stock.ticker;
+      match stock.price with
+      | Some price -> assert_bool "Price should be positive" (price > 0.0)
+      | None -> assert_failure "Price is missing")
+
+let shared_portfolio = create_rt_portfolio 1000.0
+
+let shared_portfolio_with_stocks =
+  { balance = 1000.0; stocks = [ ("AAPL", 10); ("GOOG", 5) ] }
+
+let test_1create_rt_portfolio _ =
+  assert_equal 1000.0 (get_balance shared_portfolio) ~printer:string_of_float;
+  assert_equal [] (get_stocks shared_portfolio) ~printer:(fun _ -> "[]")
+
+let test_1get_balance _ =
+  assert_equal 1000.0 (get_balance shared_portfolio) ~printer:string_of_float
+
+let test_1get_stocks _ =
+  assert_equal
+    [ ("AAPL", 10); ("GOOG", 5) ]
+    (get_stocks shared_portfolio_with_stocks)
+    ~printer:(fun stocks ->
+      String.concat ", "
+        (List.map (fun (name, qty) -> Printf.sprintf "%s: %d" name qty) stocks))
+
 let tests =
   "test suite"
   >::: [
@@ -1003,6 +1103,13 @@ let tests =
          >:: test_load_rt_portfolio_empty_file;
          "test_save_and_load_rt_portfolio_round_trip"
          >:: test_save_and_load_rt_portfolio_round_trip;
+         "Fetch Valid API Call" >:: test_fetch_valid_api;
+         "Create Portfolio" >:: test_1create_rt_portfolio;
+         "Get Balance" >:: test_1get_balance;
+         "Get Stocks" >:: test_1get_stocks;
+         "Buy Stock" >:: test_1buy_stock;
+         "Sell Stock" >:: test_1sell_stock;
+         "Portfolio Summary" >:: test_rt_portfolio_summary;
          "test_load_rt_portfolio_malformed_stock_line"
          >:: test_load_rt_portfolio_malformed_stock_line;
        ]
