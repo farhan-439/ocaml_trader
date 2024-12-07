@@ -4,6 +4,8 @@ open Portfolio
 open Rt_portfolio
 open Api
 open Lwt.Infix
+open Save_portfolio
+open Rt_save_portfolio
 
 let stocks = Stock.read_csv "../data/stocks.csv"
 let fin_stocks = Stock.read_csv "../data/financial.csv"
@@ -350,6 +352,106 @@ let test_buy_and_sell_stock_multiple_times portfolio stock_name market =
           assert_equal 5 quantity ~printer:string_of_int
       | None -> assert_failure "Expected sale to succeed")
   | None -> assert_failure "Expected purchase to succeed"
+
+(** [create_temp_file content] creates a temporary file with [content] and
+    returns its filename. *)
+let create_temp_file content =
+  let filename = Filename.temp_file "portfolio" ".csv" in
+  let oc = open_out filename in
+  output_string oc content;
+  close_out oc;
+  filename
+
+(** [test_save_rt_portfolio _] tests that saving a real-time portfolio writes
+    the correct data to a file. *)
+let test_save_rt_portfolio _ =
+  let portfolio =
+    { balance = 1000.0; stocks = [ ("AAPL", 10); ("MSFT", 5) ] }
+  in
+  let filename = Filename.temp_file "test" ".csv" in
+  save_rt_portfolio portfolio filename;
+
+  let ic = open_in filename in
+  let lines = ref [] in
+  (try
+     while true do
+       lines := input_line ic :: !lines
+     done
+   with End_of_file -> close_in ic);
+  let lines = List.rev !lines in
+  assert_equal lines
+    [ "balance,1000.00"; "AAPL,10"; "MSFT,5" ]
+    ~printer:(String.concat "\n");
+
+  Sys.remove filename
+
+(** [test_load_rt_portfolio_valid _] tests loading a valid real-time portfolio
+    from a file. *)
+let test_load_rt_portfolio_valid _ =
+  let content = "balance,1500.00\nGOOG,15\nTSLA,20" in
+  let filename = create_temp_file content in
+  match load_rt_portfolio filename with
+  | Some portfolio ->
+      assert_equal portfolio.balance 1500.00 ~printer:string_of_float;
+      assert_equal portfolio.stocks [ ("GOOG", 15); ("TSLA", 20) ]
+  | None -> assert_failure "Failed to load valid portfolio"
+
+(** [test_load_rt_portfolio_invalid_balance _] tests loading a portfolio with a
+    malformed balance line. *)
+let test_load_rt_portfolio_invalid_balance _ =
+  let content = "bal,1500.00\nGOOG,15\nTSLA,20" in
+  let filename = create_temp_file content in
+  match load_rt_portfolio filename with
+  | None -> ()
+  | Some _ -> assert_failure "Expected failure due to malformed balance line"
+
+(** [test_load_rt_portfolio_invalid_stock _] tests loading a portfolio with a
+    malformed stock line. *)
+let test_load_rt_portfolio_invalid_stock _ =
+  let content = "balance,1500.00\nGOOG,abc\nTSLA,20" in
+  let filename = create_temp_file content in
+  match load_rt_portfolio filename with
+  | None -> ()
+  | Some _ -> assert_failure "Expected failure due to malformed stock line"
+
+(** [test_load_rt_portfolio_empty_file _] tests loading a portfolio from an
+    empty file. *)
+let test_load_rt_portfolio_empty_file _ =
+  let filename = create_temp_file "" in
+  match load_rt_portfolio filename with
+  | None -> ()
+  | Some _ -> assert_failure "Expected failure due to empty file"
+
+(** [test_save_and_load_rt_portfolio_round_trip _] tests that saving and loading
+    a portfolio preserves its data. *)
+let test_save_and_load_rt_portfolio_round_trip _ =
+  let portfolio =
+    { balance = 2000.0; stocks = [ ("AAPL", 5); ("GOOG", 3); ("AMZN", 7) ] }
+  in
+  let filename = Filename.temp_file "round_trip" ".csv" in
+  save_rt_portfolio portfolio filename;
+
+  (match load_rt_portfolio filename with
+  | Some loaded_portfolio ->
+      assert_equal ~printer:string_of_float loaded_portfolio.balance
+        portfolio.balance;
+      assert_equal loaded_portfolio.stocks portfolio.stocks
+  | None ->
+      let msg =
+        Printf.sprintf "Failed to load portfolio from file %s" filename
+      in
+      assert_failure msg);
+
+  Sys.remove filename
+
+(** [test_load_rt_portfolio_malformed_stock_line _] tests loading a portfolio
+    with a malformed stock line. *)
+let test_load_rt_portfolio_malformed_stock_line _ =
+  let content = "balance,1500.00\nAAPL\nTSLA,20" in
+  let filename = create_temp_file content in
+  match load_rt_portfolio filename with
+  | None -> ()
+  | Some _ -> assert_failure "Expected failure due to malformed stock line"
 
 let test_stocks =
   [
@@ -891,6 +993,18 @@ let tests =
            let portfolio = Portfolio.create_portfolio 10000.0 in
            test_buy_and_sell_stock_multiple_times portfolio "Apple" test_stocks
          );
+         "test_save_rt_portfolio" >:: test_save_rt_portfolio;
+         "test_load_rt_portfolio_valid" >:: test_load_rt_portfolio_valid;
+         "test_load_rt_portfolio_invalid_balance"
+         >:: test_load_rt_portfolio_invalid_balance;
+         "test_load_rt_portfolio_invalid_stock"
+         >:: test_load_rt_portfolio_invalid_stock;
+         "test_load_rt_portfolio_empty_file"
+         >:: test_load_rt_portfolio_empty_file;
+         "test_save_and_load_rt_portfolio_round_trip"
+         >:: test_save_and_load_rt_portfolio_round_trip;
+         "test_load_rt_portfolio_malformed_stock_line"
+         >:: test_load_rt_portfolio_malformed_stock_line;
        ]
 
 let _ = run_test_tt_main tests
