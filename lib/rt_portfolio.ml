@@ -9,73 +9,81 @@ type rt_portfolio = {
 let create_rt_portfolio initial_balance =
   { balance = initial_balance; stocks = [] }
 
+let is_stock_available stock_name =
+  Api.fetch_stock_price (String.uppercase_ascii stock_name) >>= function
+  | None -> Lwt.return false
+  | Some api_result -> Lwt.return (Option.is_some api_result.Api.price)
+
 let buy_stock portfolio stock_name qty =
   if qty <= 0 then Lwt.return_none
   else
-  Api.fetch_stock_price stock_name >>= function
-  | None -> Lwt.return_none (* Stock price not available *)
-  | Some api_result -> (
-      match api_result.Api.price with
-      | None -> Lwt.return_none (* Price is missing in API response *)
-      | Some price ->
-          let total_cost = float_of_int qty *. price in
-          if portfolio.balance >= total_cost then
-            let updated_stocks =
-              let rec update_stocks stocks =
-                match stocks with
-                | [] -> [ (stock_name, qty) ]
-                | (name, quantity) :: rest ->
-                    if name = stock_name then (name, quantity + qty) :: rest
-                    else (name, quantity) :: update_stocks rest
+    Api.fetch_stock_price stock_name >>= function
+    | None -> Lwt.return_none (* Stock price not available *)
+    | Some api_result -> (
+        match api_result.Api.price with
+        | None -> Lwt.return_none (* Price is missing in API response *)
+        | Some price ->
+            let total_cost = float_of_int qty *. price in
+            if portfolio.balance >= total_cost then
+              let updated_stocks =
+                let rec update_stocks stocks =
+                  match stocks with
+                  | [] -> [ (stock_name, qty) ]
+                  | (name, quantity) :: rest ->
+                      if name = stock_name then (name, quantity + qty) :: rest
+                      else (name, quantity) :: update_stocks rest
+                in
+                update_stocks portfolio.stocks
               in
-              update_stocks portfolio.stocks
-            in
-            let updated_portfolio =
-              {
-                balance = portfolio.balance -. total_cost;
-                stocks = updated_stocks;
-              }
-            in
-            Lwt.return_some updated_portfolio
-          else Lwt.return_none (* Not enough balance *))
+              let updated_portfolio =
+                {
+                  balance = portfolio.balance -. total_cost;
+                  stocks = updated_stocks;
+                }
+              in
+              Lwt.return_some updated_portfolio
+            else Lwt.return_none (* Not enough balance *))
 
 let sell_stock portfolio stock_name qty =
-  Api.fetch_stock_price stock_name >>= function
-  | None -> Lwt.return_none
-  | Some api_result -> (
-      match api_result.Api.price with
-      | None -> Lwt.return_none
-      | Some price -> (
-          let rec update_stocks_and_balance stocks acc_balance =
-            match stocks with
-            | [] -> None
-            | (name, quantity) :: rest ->
-                if name = stock_name then
-                  if quantity >= qty then
-                    let updated_stocks =
-                      if quantity = qty then rest
-                      else (name, quantity - qty) :: rest
-                    in
-                    let total_sale = float_of_int qty *. price in
-                    Some
-                      {
-                        balance = acc_balance +. total_sale;
-                        stocks = updated_stocks;
-                      }
-                  else None (* Not enough shares to sell *)
-                else
-                  update_stocks_and_balance rest acc_balance
-                  |> Option.map (fun updated_portfolio ->
-                         {
-                           updated_portfolio with
-                           stocks = (name, quantity) :: updated_portfolio.stocks;
-                         })
-          in
-          match
-            update_stocks_and_balance portfolio.stocks portfolio.balance
-          with
-          | Some updated_portfolio -> Lwt.return_some updated_portfolio
-          | None -> Lwt.return_none))
+  if qty <= 0 then Lwt.return_none (* Reject non-positive quantities *)
+  else
+    Api.fetch_stock_price stock_name >>= function
+    | None -> Lwt.return_none
+    | Some api_result -> (
+        match api_result.Api.price with
+        | None -> Lwt.return_none
+        | Some price -> (
+            let rec update_stocks_and_balance stocks acc_balance =
+              match stocks with
+              | [] -> None
+              | (name, quantity) :: rest ->
+                  if name = stock_name then
+                    if quantity >= qty then
+                      let updated_stocks =
+                        if quantity = qty then rest
+                        else (name, quantity - qty) :: rest
+                      in
+                      let total_sale = float_of_int qty *. price in
+                      Some
+                        {
+                          balance = acc_balance +. total_sale;
+                          stocks = updated_stocks;
+                        }
+                    else None (* Not enough shares to sell *)
+                  else
+                    update_stocks_and_balance rest acc_balance
+                    |> Option.map (fun updated_portfolio ->
+                           {
+                             updated_portfolio with
+                             stocks =
+                               (name, quantity) :: updated_portfolio.stocks;
+                           })
+            in
+            match
+              update_stocks_and_balance portfolio.stocks portfolio.balance
+            with
+            | Some updated_portfolio -> Lwt.return_some updated_portfolio
+            | None -> Lwt.return_none))
 
 let rt_portfolio_summary portfolio =
   let rec stock_value_summary stocks =

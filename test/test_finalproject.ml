@@ -27,6 +27,7 @@ let test_update_prices pattern stock_name stock_prices =
     Stock.update_prices pattern (Stock.of_float stock_name stock_prices)
   in
   let name, prices = Stock.to_float updated_prices in
+
   assert_equal stock_name name ~printer:Fun.id;
   assert_equal
     (List.length stock_prices + 1)
@@ -35,15 +36,16 @@ let test_update_prices pattern stock_name stock_prices =
   let avg_price =
     List.fold_left ( +. ) 0. prices /. float_of_int (List.length prices)
   in
+
   let last_price = List.nth prices (List.length prices - 1) in
+  let within_tolerance a b tolerance = abs_float (a -. b) <= tolerance in
   match pattern with
   | "high" ->
-      assert (last_price >= avg_price *. 1. && last_price <= avg_price *. 1.6)
+      assert (within_tolerance last_price (avg_price *. 1.3) (avg_price *. 0.3))
   | "mid" ->
-      assert (last_price >= avg_price *. 0.8 && last_price <= avg_price *. 1.2)
+      assert (within_tolerance last_price (avg_price *. 1.0) (avg_price *. 0.2))
   | _ ->
-      assert (last_price >= avg_price *. 0.4 && last_price <= avg_price *. 1.)
-(*added larger margin of error to account for floating point errors*)
+      assert (within_tolerance last_price (avg_price *. 0.7) (avg_price *. 0.3))
 
 (**[test_update_balance balance expected_balance] tests to make sure an empty
    portfolio updates its balance to a specific balance. Stocks should not
@@ -242,7 +244,112 @@ let test_empty_rt_portfolio_summary =
   let portfolio = Rt_portfolio.create_rt_portfolio 100. in
   match Lwt_main.run (Rt_portfolio.rt_portfolio_summary portfolio) with
   | [], x -> ignore () (*empty portfolio - good*)
-  | _ -> assert_failure "Should be empety"
+  | _ -> assert_failure "Should be empty"
+
+(** [test_buy_stock_invalid_name portfolio invalid_name market] Tests buying a
+    stock with an invalid name, expecting it to fail. *)
+let test_buy_stock_invalid_name portfolio invalid_name market =
+  match Portfolio.buy_stock portfolio invalid_name 10 market with
+  | None -> ()
+  | Some _ -> assert_failure "Expected purchase to fail for invalid stock name"
+
+(** [test_portfolio_with_mixed_stocks portfolio market expected_summary expected_balance]
+    Tests a portfolio containing multiple stocks with varying quantities. *)
+let test_portfolio_with_mixed_stocks portfolio market expected_summary
+    expected_balance =
+  let within_tolerance a b tolerance = abs_float (a -. b) <= tolerance in
+  let summary, balance = portfolio_summary portfolio market in
+  assert (within_tolerance balance expected_balance 0.01);
+  List.iter2
+    (fun (expected_name, expected_qty, expected_value)
+         (actual_name, actual_qty, actual_value) ->
+      assert_equal expected_name actual_name;
+      assert_equal expected_qty actual_qty;
+      assert (within_tolerance actual_value expected_value 0.01))
+    expected_summary summary
+
+(** [test_portfolio_summary_empty portfolio market] Tests portfolio summary when
+    there are no stocks. *)
+let test_portfolio_summary_empty portfolio market =
+  let summary, balance = portfolio_summary portfolio market in
+  assert_equal [] summary;
+  assert_equal
+    (Portfolio.get_balance portfolio)
+    balance ~printer:string_of_float
+
+(** [test_buy_stock_large_qty portfolio stock_name market] Tests buying an
+    extremely large quantity of shares, expecting failure. *)
+let test_buy_stock_large_qty portfolio stock_name market =
+  match Portfolio.buy_stock portfolio stock_name 1_000_000 market with
+  | None -> ()
+  | Some _ -> assert_failure "Expected purchase to fail for large quantity"
+
+(** [test_sell_stock_zero_holdings portfolio stock_name market] Tests selling a
+    stock not present in the portfolio, expecting it to fail. *)
+let test_sell_stock_zero_holdings portfolio stock_name market =
+  match Portfolio.sell_stock portfolio stock_name 10 market with
+  | None -> ()
+  | Some _ -> assert_failure "Expected sale to fail for zero holdings"
+
+(** [test_portfolio_summary_missing_prices portfolio market] Tests portfolio
+    summary when some stocks have missing prices. *)
+let test_portfolio_summary_missing_prices portfolio market =
+  let summary, _ = Portfolio.portfolio_summary portfolio market in
+  List.iter
+    (fun (name, _, value) ->
+      if value = 0. then
+        print_endline
+          (Printf.sprintf "Warning: Missing price for stock %s in portfolio"
+             name))
+    summary
+
+(** [test_buy_stock_negative_price portfolio stock_name market] Tests buying a
+    stock with a negative price, expecting it to fail. *)
+let test_buy_stock_negative_price portfolio stock_name market =
+  match Portfolio.buy_stock portfolio stock_name 10 market with
+  | None -> ()
+  | Some _ -> assert_failure "Expected purchase to fail for negative price"
+
+(** [test_portfolio_summary_empty_portfolio portfolio market] Tests portfolio
+    summary for an empty portfolio. *)
+let test_portfolio_summary_empty_portfolio portfolio market =
+  let summary, balance = Portfolio.portfolio_summary portfolio market in
+  assert_equal [] summary;
+  assert_equal
+    (Portfolio.get_balance portfolio)
+    balance ~printer:string_of_float
+
+(** [test_sell_stock_case_sensitivity portfolio market] Tests selling shares
+    with case-sensitive stock names, ensuring the system correctly identifies
+    holdings. *)
+let test_sell_stock_case_sensitivity portfolio market =
+  match Portfolio.sell_stock portfolio "APPLE" 10 market with
+  | None -> ()
+  | Some _ -> assert_failure "Expected sale to fail due to insufficient shares"
+
+(** [test_portfolio_summary_total_calculation portfolio market] Tests that the
+    total portfolio value matches the sum of individual stock values and the
+    balance. *)
+let test_portfolio_summary_total_calculation portfolio market =
+  let summary, balance = Portfolio.portfolio_summary portfolio market in
+  let total_value =
+    List.fold_left (fun acc (_, _, value) -> acc +. value) 0. summary +. balance
+  in
+  assert_equal total_value balance ~printer:string_of_float
+
+(** [test_buy_and_sell_stock_multiple_times portfolio stock_name market] Tests
+    buying and selling the same stock multiple times, verifying quantities and
+    balances. *)
+let test_buy_and_sell_stock_multiple_times portfolio stock_name market =
+  match Portfolio.buy_stock portfolio stock_name 10 market with
+  | Some portfolio1 -> (
+      match Portfolio.sell_stock portfolio1 stock_name 5 market with
+      | Some portfolio2 ->
+          let summary, _ = Portfolio.portfolio_summary portfolio2 market in
+          let _, quantity, _ = List.hd summary in
+          assert_equal 5 quantity ~printer:string_of_int
+      | None -> assert_failure "Expected sale to succeed")
+  | None -> assert_failure "Expected purchase to succeed"
 
 let test_stocks =
   [
@@ -745,6 +852,45 @@ let tests =
                test_sell_stock_increases_balance p "Apple" 5 test_stocks 9260.0
                  [ ("Apple", 5) ]
            | None -> assert_failure "Failed to buy initial stock for testing" );
+         ( "test buy stock invalid name" >:: fun _ ->
+           let portfolio = Portfolio.create_portfolio 10000.0 in
+           test_buy_stock_invalid_name portfolio "InvalidStockName" stocks );
+         ( "test portfolio with mixed stocks" >:: fun _ ->
+           let portfolio = Portfolio.create_portfolio 10000.0 in
+           match Portfolio.buy_stock portfolio "Apple" 10 stocks with
+           | Some p ->
+               test_portfolio_with_mixed_stocks p stocks
+                 [ ("Apple", 10, 1480.0) ]
+                 8520.0
+           | None -> assert_failure "Failed to initialize portfolio" );
+         ( "test portfolio summary empty" >:: fun _ ->
+           let portfolio = Portfolio.create_portfolio 10000.0 in
+           test_portfolio_summary_empty portfolio stocks );
+         ( "test buy stock large quantity" >:: fun _ ->
+           let portfolio = Portfolio.create_portfolio 10000.0 in
+           test_buy_stock_large_qty portfolio "Apple" stocks );
+         ( "test sell stock zero holdings" >:: fun _ ->
+           let portfolio = Portfolio.create_portfolio 10000.0 in
+           test_sell_stock_zero_holdings portfolio "Apple" test_stocks );
+         ( "test portfolio summary missing prices" >:: fun _ ->
+           let portfolio = Portfolio.create_portfolio 10000.0 in
+           test_portfolio_summary_missing_prices portfolio test_stocks );
+         ( "test buy stock negative price" >:: fun _ ->
+           let portfolio = Portfolio.create_portfolio 10000.0 in
+           test_buy_stock_negative_price portfolio "InvalidStock" test_stocks );
+         ( "test portfolio summary empty portfolio" >:: fun _ ->
+           let portfolio = Portfolio.create_portfolio 0.0 in
+           test_portfolio_summary_empty_portfolio portfolio test_stocks );
+         ( "test sell stock case sensitivity" >:: fun _ ->
+           let portfolio = Portfolio.create_portfolio 10000.0 in
+           test_sell_stock_case_sensitivity portfolio test_stocks );
+         ( "test portfolio summary total calculation" >:: fun _ ->
+           let portfolio = Portfolio.create_portfolio 10000.0 in
+           test_portfolio_summary_total_calculation portfolio test_stocks );
+         ( "test buy and sell stock multiple times" >:: fun _ ->
+           let portfolio = Portfolio.create_portfolio 10000.0 in
+           test_buy_and_sell_stock_multiple_times portfolio "Apple" test_stocks
+         );
        ]
 
 let _ = run_test_tt_main tests

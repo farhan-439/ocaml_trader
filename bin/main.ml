@@ -154,9 +154,16 @@ let rec quantity_input_loop mode =
   let input = read_line () in
   try
     let quantity = int_of_string input in
-    quantity
+    if quantity <= 0 then (
+      ANSITerminal.print_string
+        [ ANSITerminal.Bold; ANSITerminal.red ]
+        "❌ Error: Quantity must be a positive integer. Please try again.\n";
+      quantity_input_loop mode)
+    else quantity
   with _ ->
-    print_endline "Invalid input - please enter a valid integer.";
+    ANSITerminal.print_string
+      [ ANSITerminal.Bold; ANSITerminal.red ]
+      "❌ Error: Invalid input. Please enter a valid integer.\n";
     quantity_input_loop mode
 
 (**[print_yes_no] prints a nicely formatted (y/n) string using ANSITerminal.*)
@@ -201,20 +208,30 @@ let rec purchase_loop portfolio =
   Printf.printf "Are you sure you want to buy %d shares of %s? " quantity
     stock_name;
   print_yes_no ();
-  (*this is all setup*)
   let input = read_line () in
   if String.lowercase_ascii input = "y" then (
     try
       match Lwt_main.run (RP.buy_stock !portfolio stock_name quantity) with
       | Some updated_portfolio ->
           portfolio := updated_portfolio;
-          Printf.printf "Bought %d shares of %s\n" quantity stock_name
+          ANSITerminal.print_string
+            [ ANSITerminal.Bold; ANSITerminal.green ]
+            (Printf.sprintf "✅ Bought %d shares of %s\n" quantity stock_name)
       | None ->
-          print_endline "Purchase failed. Check balance or stock availability."
+          ANSITerminal.print_string
+            [ ANSITerminal.Bold; ANSITerminal.red ]
+            "❌ Purchase failed. Check balance or stock availability.\n";
+          purchase_loop portfolio
     with _ ->
-      print_endline ("Could not find " ^ stock_name ^ ". Please try again.");
+      ANSITerminal.print_string
+        [ ANSITerminal.Bold; ANSITerminal.red ]
+        (Printf.sprintf "❌ Could not find %s. Please try again.\n"
+           (String.capitalize_ascii stock_name));
       purchase_loop portfolio)
-  else print_endline "Purchase canceled."
+  else
+    ANSITerminal.print_string
+      [ ANSITerminal.Bold; ANSITerminal.yellow ]
+      "⚠️ Purchase canceled.\n"
 
 let () =
   ANSITerminal.erase Screen;
@@ -269,8 +286,11 @@ let () =
         let stock_data =
           try read_csv filename
           with _ ->
-            print_endline
-              "Error - file could not be found. Using default data/stocks.csv.";
+            ANSITerminal.print_string
+              [ ANSITerminal.Bold; ANSITerminal.red ]
+              (Printf.sprintf
+                 "❌ Error - file could not be found. Using default \
+                  data/stocks.csv.\n");
             read_csv "data/stocks.csv"
         in
 
@@ -283,7 +303,10 @@ let () =
              ("Prices for " ^ String.capitalize_ascii stock_name ^ ":");
            print_prices prices
          with
-        | Failure msg -> print_endline ("Error: " ^ msg)
+        | Failure msg ->
+            ANSITerminal.print_string
+              [ ANSITerminal.Bold; ANSITerminal.red ]
+              (Printf.sprintf "❌ Error: %s\n" msg)
         | Not_found -> print_endline "Stock not found.");
 
         let new_stocks =
@@ -382,52 +405,67 @@ let () =
               else
                 ANSITerminal.print_string
                   [ ANSITerminal.Bold; ANSITerminal.yellow ]
-                  "Purchase canceled.\n";
+                  "⚠️ Purchase canceled.\n";
               print_horizontal_rule ();
               portfolio_menu new_stocks
           | "2" ->
               let stocks = P.get_stocks !portfolio in
               if stocks = [] then (
-                print_endline "Error: You have no stocks to sell.";
+                ANSITerminal.print_string
+                  [ ANSITerminal.Bold; ANSITerminal.red ]
+                  "❌ Error: You have no stocks to sell.\n";
                 portfolio_menu new_stocks)
               else
-                let stock_name =
-                  match stocks with
-                  | [ (name, _) ] ->
-                      print_endline
-                        ("Assuming stock to sell is: "
-                        ^ String.capitalize_ascii name);
-                      name
-                  | _ ->
-                      print_endline "Enter stock name to sell:";
-                      String.lowercase_ascii (read_line ())
+                let rec sell_stock_loop () =
+                  let stock_name =
+                    match stocks with
+                    | [ (name, _) ] ->
+                        print_endline
+                          ("Assuming stock to sell is: "
+                          ^ String.capitalize_ascii name);
+                        name
+                    | _ ->
+                        print_endline "Enter stock name to sell:";
+                        String.lowercase_ascii (read_line ())
+                  in
+                  if
+                    not
+                      (List.exists (fun (name, _) -> name = stock_name) stocks)
+                  then (
+                    ANSITerminal.print_string
+                      [ ANSITerminal.Bold; ANSITerminal.red ]
+                      "❌ Error: Stock not found in your portfolio. Please try \
+                       again.\n";
+                    sell_stock_loop ())
+                  else
+                    let quantity = quantity_input_loop "sell" in
+                    Printf.printf
+                      "Are you sure you want to sell %d shares of %s? " quantity
+                      (String.capitalize_ascii stock_name);
+                    print_yes_no ();
+                    if String.lowercase_ascii (read_line ()) = "y" then (
+                      match
+                        P.sell_stock !portfolio stock_name quantity new_stocks
+                      with
+                      | Some updated_portfolio ->
+                          portfolio := updated_portfolio;
+                          ANSITerminal.print_string
+                            [ ANSITerminal.Bold; ANSITerminal.green ]
+                            (Printf.sprintf
+                               "✅ Successfully sold %d shares of %s\n" quantity
+                               (String.capitalize_ascii stock_name))
+                      | None ->
+                          ANSITerminal.print_string
+                            [ ANSITerminal.Bold; ANSITerminal.red ]
+                            "❌ Sale failed. Check if you have enough shares to \
+                             sell or if the stock exists.\n";
+                          sell_stock_loop ())
+                    else
+                      ANSITerminal.print_string
+                        [ ANSITerminal.Bold; ANSITerminal.yellow ]
+                        "⚠️ Sale canceled.\n"
                 in
-                let quantity = quantity_input_loop "sell" in
-                (* Confirmation step *)
-                Printf.printf "Are you sure you want to sell %d shares of %s? "
-                  quantity
-                  (String.capitalize_ascii stock_name);
-                print_yes_no ();
-                if String.lowercase_ascii (read_line ()) = "y" then
-                  match
-                    P.sell_stock !portfolio stock_name quantity new_stocks
-                  with
-                  | Some updated_portfolio ->
-                      portfolio := updated_portfolio;
-                      ANSITerminal.print_string
-                        [ ANSITerminal.Bold; ANSITerminal.green ]
-                        (Printf.sprintf "✅ Successfully sold %d shares of %s\n"
-                           quantity
-                           (String.capitalize_ascii stock_name))
-                  | None ->
-                      ANSITerminal.print_string
-                        [ ANSITerminal.Bold; ANSITerminal.red ]
-                        "❌ Sale failed. Check if you have enough shares to \
-                         sell or if the stock exists.\n"
-                else
-                  ANSITerminal.print_string
-                    [ ANSITerminal.Bold; ANSITerminal.yellow ]
-                    "⚠️ Sale canceled.\n";
+                sell_stock_loop ();
                 print_horizontal_rule ();
                 portfolio_menu new_stocks
           | "3" ->
@@ -444,8 +482,8 @@ let () =
                 "Stock Holdings:\n";
               List.iter
                 (fun (name, qty, value) ->
-                  Printf.printf ": %s, Quantity: %d, Value: %.2f\n" name
-                    qty value)
+                  Printf.printf ": %s, Quantity: %d, Value: %.2f\n" name qty
+                    value)
                 summary;
               let sum =
                 List.fold_left
@@ -601,29 +639,58 @@ let () =
           | "2" ->
               let stocks = RP.get_stocks !portfolio in
               if stocks = [] then (
-                print_endline "Error: You have no stocks to sell.";
+                ANSITerminal.print_string
+                  [ ANSITerminal.Bold; ANSITerminal.red ]
+                  "❌ Error: You have no stocks to sell.\n";
                 rt_portfolio_menu ())
-              else (
-                print_endline "Enter stock ticker to sell:";
-                let stock_name = String.uppercase_ascii (read_line ()) in
-                let quantity = quantity_input_loop "sell" in
-                (* Confirmation step *)
-                Printf.printf "Are you sure you want to sell %d shares of %s? "
-                  quantity stock_name;
-                print_yes_no ();
-                if String.lowercase_ascii (read_line ()) = "y" then
-                  match
-                    Lwt_main.run (RP.sell_stock !portfolio stock_name quantity)
-                  with
-                  | Some updated_portfolio ->
-                      portfolio := updated_portfolio;
-                      Printf.printf "Sold %d shares of %s\n" quantity stock_name
-                  | None ->
-                      print_endline
-                        "Sale failed. Check if you have enough shares to sell \
-                         or if the stock exists."
-                else print_endline "Sale canceled.";
-                rt_portfolio_menu ())
+              else
+                let rec sell_stock_loop () =
+                  print_endline "Enter stock ticker to sell:";
+                  let stock_name = String.uppercase_ascii (read_line ()) in
+
+                  if
+                    not
+                      (List.exists
+                         (fun (name, _) ->
+                           String.uppercase_ascii name = stock_name)
+                         stocks)
+                  then (
+                    ANSITerminal.print_string
+                      [ ANSITerminal.Bold; ANSITerminal.red ]
+                      "❌ Error: Stock not found in your portfolio. Please try \
+                       again.\n";
+                    sell_stock_loop ())
+                  else
+                    let quantity = quantity_input_loop "sell" in
+                    Printf.printf
+                      "Are you sure you want to sell %d shares of %s? " quantity
+                      stock_name;
+                    print_yes_no ();
+                    if String.lowercase_ascii (read_line ()) = "y" then (
+                      match
+                        Lwt_main.run
+                          (RP.sell_stock !portfolio stock_name quantity)
+                      with
+                      | Some updated_portfolio ->
+                          portfolio := updated_portfolio;
+                          ANSITerminal.print_string
+                            [ ANSITerminal.Bold; ANSITerminal.green ]
+                            (Printf.sprintf
+                               "✅ Successfully sold %d shares of %s\n" quantity
+                               (String.capitalize_ascii stock_name))
+                      | None ->
+                          ANSITerminal.print_string
+                            [ ANSITerminal.Bold; ANSITerminal.red ]
+                            "❌ Sale failed. Check if you have enough shares to \
+                             sell or if the stock exists.\n";
+                          sell_stock_loop ())
+                    else
+                      ANSITerminal.print_string
+                        [ ANSITerminal.Bold; ANSITerminal.yellow ]
+                        "⚠️ Sale canceled.\n"
+                in
+                sell_stock_loop ();
+                rt_portfolio_menu ()
           | "3" ->
               print_horizontal_rule ();
               ANSITerminal.print_string
@@ -639,8 +706,8 @@ let () =
                 "Stock Holdings:\n";
               List.iter
                 (fun (name, qty, value) ->
-                  Printf.printf ": %s, Quantity: %d, Value: %.2f\n" name
-                    qty value)
+                  Printf.printf ": %s, Quantity: %d, Value: %.2f\n" name qty
+                    value)
                 summary;
 
               let sum =
