@@ -27,6 +27,7 @@ let test_update_prices pattern stock_name stock_prices =
     Stock.update_prices pattern (Stock.of_float stock_name stock_prices)
   in
   let name, prices = Stock.to_float updated_prices in
+
   assert_equal stock_name name ~printer:Fun.id;
   assert_equal
     (List.length stock_prices + 1)
@@ -35,15 +36,16 @@ let test_update_prices pattern stock_name stock_prices =
   let avg_price =
     List.fold_left ( +. ) 0. prices /. float_of_int (List.length prices)
   in
+
   let last_price = List.nth prices (List.length prices - 1) in
+  let within_tolerance a b tolerance = abs_float (a -. b) <= tolerance in
   match pattern with
   | "high" ->
-      assert (last_price >= avg_price *. 1. && last_price <= avg_price *. 1.6)
+      assert (within_tolerance last_price (avg_price *. 1.3) (avg_price *. 0.3))
   | "mid" ->
-      assert (last_price >= avg_price *. 0.8 && last_price <= avg_price *. 1.2)
+      assert (within_tolerance last_price (avg_price *. 1.0) (avg_price *. 0.2))
   | _ ->
-      assert (last_price >= avg_price *. 0.4 && last_price <= avg_price *. 1.)
-(*added larger margin of error to account for floating point errors*)
+      assert (within_tolerance last_price (avg_price *. 0.7) (avg_price *. 0.3))
 
 (**[test_update_balance balance expected_balance] tests to make sure an empty
    portfolio updates its balance to a specific balance. Stocks should not
@@ -242,7 +244,112 @@ let test_empty_rt_portfolio_summary =
   let portfolio = Rt_portfolio.create_rt_portfolio 100. in
   match Lwt_main.run (Rt_portfolio.rt_portfolio_summary portfolio) with
   | [], x -> ignore () (*empty portfolio - good*)
-  | _ -> assert_failure "Should be empety"
+  | _ -> assert_failure "Should be empty"
+
+(** [test_buy_stock_invalid_name portfolio invalid_name market] Tests buying a
+    stock with an invalid name, expecting it to fail. *)
+let test_buy_stock_invalid_name portfolio invalid_name market =
+  match Portfolio.buy_stock portfolio invalid_name 10 market with
+  | None -> ()
+  | Some _ -> assert_failure "Expected purchase to fail for invalid stock name"
+
+(** [test_portfolio_with_mixed_stocks portfolio market expected_summary expected_balance]
+    Tests a portfolio containing multiple stocks with varying quantities. *)
+let test_portfolio_with_mixed_stocks portfolio market expected_summary
+    expected_balance =
+  let within_tolerance a b tolerance = abs_float (a -. b) <= tolerance in
+  let summary, balance = portfolio_summary portfolio market in
+  assert (within_tolerance balance expected_balance 0.01);
+  List.iter2
+    (fun (expected_name, expected_qty, expected_value)
+         (actual_name, actual_qty, actual_value) ->
+      assert_equal expected_name actual_name;
+      assert_equal expected_qty actual_qty;
+      assert (within_tolerance actual_value expected_value 0.01))
+    expected_summary summary
+
+(** [test_portfolio_summary_empty portfolio market] Tests portfolio summary when
+    there are no stocks. *)
+let test_portfolio_summary_empty portfolio market =
+  let summary, balance = portfolio_summary portfolio market in
+  assert_equal [] summary;
+  assert_equal
+    (Portfolio.get_balance portfolio)
+    balance ~printer:string_of_float
+
+(** [test_buy_stock_large_qty portfolio stock_name market] Tests buying an
+    extremely large quantity of shares, expecting failure. *)
+let test_buy_stock_large_qty portfolio stock_name market =
+  match Portfolio.buy_stock portfolio stock_name 1_000_000 market with
+  | None -> ()
+  | Some _ -> assert_failure "Expected purchase to fail for large quantity"
+
+(** [test_sell_stock_zero_holdings portfolio stock_name market] Tests selling a
+    stock not present in the portfolio, expecting it to fail. *)
+let test_sell_stock_zero_holdings portfolio stock_name market =
+  match Portfolio.sell_stock portfolio stock_name 10 market with
+  | None -> ()
+  | Some _ -> assert_failure "Expected sale to fail for zero holdings"
+
+(** [test_portfolio_summary_missing_prices portfolio market] Tests portfolio
+    summary when some stocks have missing prices. *)
+let test_portfolio_summary_missing_prices portfolio market =
+  let summary, _ = Portfolio.portfolio_summary portfolio market in
+  List.iter
+    (fun (name, _, value) ->
+      if value = 0. then
+        print_endline
+          (Printf.sprintf "Warning: Missing price for stock %s in portfolio"
+             name))
+    summary
+
+(** [test_buy_stock_negative_price portfolio stock_name market] Tests buying a
+    stock with a negative price, expecting it to fail. *)
+let test_buy_stock_negative_price portfolio stock_name market =
+  match Portfolio.buy_stock portfolio stock_name 10 market with
+  | None -> ()
+  | Some _ -> assert_failure "Expected purchase to fail for negative price"
+
+(** [test_portfolio_summary_empty_portfolio portfolio market] Tests portfolio
+    summary for an empty portfolio. *)
+let test_portfolio_summary_empty_portfolio portfolio market =
+  let summary, balance = Portfolio.portfolio_summary portfolio market in
+  assert_equal [] summary;
+  assert_equal
+    (Portfolio.get_balance portfolio)
+    balance ~printer:string_of_float
+
+(** [test_sell_stock_case_sensitivity portfolio market] Tests selling shares
+    with case-sensitive stock names, ensuring the system correctly identifies
+    holdings. *)
+let test_sell_stock_case_sensitivity portfolio market =
+  match Portfolio.sell_stock portfolio "APPLE" 10 market with
+  | None -> ()
+  | Some _ -> assert_failure "Expected sale to fail due to insufficient shares"
+
+(** [test_portfolio_summary_total_calculation portfolio market] Tests that the
+    total portfolio value matches the sum of individual stock values and the
+    balance. *)
+let test_portfolio_summary_total_calculation portfolio market =
+  let summary, balance = Portfolio.portfolio_summary portfolio market in
+  let total_value =
+    List.fold_left (fun acc (_, _, value) -> acc +. value) 0. summary +. balance
+  in
+  assert_equal total_value balance ~printer:string_of_float
+
+(** [test_buy_and_sell_stock_multiple_times portfolio stock_name market] Tests
+    buying and selling the same stock multiple times, verifying quantities and
+    balances. *)
+let test_buy_and_sell_stock_multiple_times portfolio stock_name market =
+  match Portfolio.buy_stock portfolio stock_name 10 market with
+  | Some portfolio1 -> (
+      match Portfolio.sell_stock portfolio1 stock_name 5 market with
+      | Some portfolio2 ->
+          let summary, _ = Portfolio.portfolio_summary portfolio2 market in
+          let _, quantity, _ = List.hd summary in
+          assert_equal 5 quantity ~printer:string_of_int
+      | None -> assert_failure "Expected sale to succeed")
+  | None -> assert_failure "Expected purchase to succeed"
 
 let test_stocks =
   [
@@ -304,154 +411,146 @@ let tests =
            test_get_prices "American express"
              [ 333.81; 116.17; 288.77; 140.37 ]
              "../data/financial.csv" );
-
-( "test get_prices Ally Financial" >:: fun _ ->
-  test_get_prices "Ally financial"
-    [300.12; 312.45; 295.00; 305.6]
-    "../data/financial.csv" );
-( "test get_prices BB&T Corp" >:: fun _ ->
-  test_get_prices "Bb&t corp"
-    [200.45; 250.10; 210.3; 220.5]
-    "../data/financial.csv" );
-( "test get_prices Fifth Third Bancorp" >:: fun _ ->
-  test_get_prices "Fifth third bancorp"
-    [185.4; 190.6; 179.2; 188.5]
-    "../data/financial.csv" );
-( "test get_prices Regions Financial" >:: fun _ ->
-  test_get_prices "Regions financial"
-    [145.9; 150.4; 143.0; 149.9]
-    "../data/financial.csv" );
-( "test get_prices KeyCorp" >:: fun _ ->
-  test_get_prices "Keycorp"
-    [190.2; 210.8; 205.1; 202.3]
-    "../data/financial.csv" );
-( "test get_prices M&T Bank" >:: fun _ ->
-  test_get_prices "M&t bank"
-    [299.3; 310.6; 305.4; 315.2]
-    "../data/financial.csv" );
-( "test get_prices SunTrust Banks" >:: fun _ ->
-  test_get_prices "Suntrust banks"
-    [270.5; 265.9; 275.0; 260.1]
-    "../data/financial.csv" );
-( "test get_prices Northern Trust" >:: fun _ ->
-  test_get_prices "Northern trust"
-    [360.4; 358.6; 362.7; 355.5]
-    "../data/financial.csv" );
-( "test get_prices State Street" >:: fun _ ->
-  test_get_prices "State street"
-    [410.0; 415.2; 407.3; 420.1]
-    "../data/financial.csv" );
-( "test get_prices TD Bank" >:: fun _ ->
-  test_get_prices "Td bank"
-    [375.5; 380.7; 385.2; 390.6]
-    "../data/financial.csv" );
-
-(* update_prices tests for new entries (varying patterns) *)
-( "test update_prices high Ally Financial" >:: fun _ ->
-  test_update_prices "high" "Ally financial"
-    [300.12; 312.45; 295.00; 305.6] );
-( "test update_prices mid BB&T Corp" >:: fun _ ->
-  test_update_prices "mid" "Bb&t corp"
-    [200.45; 250.10; 210.3; 220.5] );
-( "test update_prices low Fifth Third Bancorp" >:: fun _ ->
-  test_update_prices "low" "Fifth third bancorp"
-    [185.4; 190.6; 179.2; 188.5] );
-( "test update_prices high Regions Financial" >:: fun _ ->
-  test_update_prices "high" "Regions financial"
-    [145.9; 150.4; 143.0; 149.9] );
-( "test update_prices mid KeyCorp" >:: fun _ ->
-  test_update_prices "mid" "Keycorp"
-    [190.2; 210.8; 205.1; 202.3] );
-( "test update_prices low M&T Bank" >:: fun _ ->
-  test_update_prices "low" "M&t bank"
-    [299.3; 310.6; 305.4; 315.2] );
-( "test update_prices high SunTrust Banks" >:: fun _ ->
-  test_update_prices "high" "Suntrust banks"
-    [270.5; 265.9; 275.0; 260.1] );
-( "test update_prices mid Northern Trust" >:: fun _ ->
-  test_update_prices "mid" "Northern trust"
-    [360.4; 358.6; 362.7; 355.5] );
-( "test update_prices low State Street" >:: fun _ ->
-  test_update_prices "low" "State street"
-    [410.0; 415.2; 407.3; 420.1] );
-( "test update_prices high TD Bank" >:: fun _ ->
-  test_update_prices "high" "Td bank"
-    [375.5; 380.7; 385.2; 390.6] );
-
-(* to_float tests for new entries *)
-( "test to_float Ally Financial" >:: fun _ ->
-  test_to_float
-    (List.nth (Stock.read_csv "../data/financial.csv") 15)
-    "Ally financial"
-    [300.12; 312.45; 295.00; 305.6] );
-( "test to_float BB&T Corp" >:: fun _ ->
-  test_to_float
-    (List.nth (Stock.read_csv "../data/financial.csv") 16)
-    "Bb&t corp"
-    [200.45; 250.10; 210.3; 220.5] );
-( "test to_float Fifth Third Bancorp" >:: fun _ ->
-  test_to_float
-    (List.nth (Stock.read_csv "../data/financial.csv") 17)
-    "Fifth third bancorp"
-    [185.4; 190.6; 179.2; 188.5] );
-( "test to_float Regions Financial" >:: fun _ ->
-  test_to_float
-    (List.nth (Stock.read_csv "../data/financial.csv") 18)
-    "Regions financial"
-    [145.9; 150.4; 143.0; 149.9] );
-( "test to_float KeyCorp" >:: fun _ ->
-  test_to_float
-    (List.nth (Stock.read_csv "../data/financial.csv") 19)
-    "Keycorp"
-    [190.2; 210.8; 205.1; 202.3] );
-( "test to_float M&T Bank" >:: fun _ ->
-  test_to_float
-    (List.nth (Stock.read_csv "../data/financial.csv") 20)
-    "M&t bank"
-    [299.3; 310.6; 305.4; 315.2] );
-( "test to_float SunTrust Banks" >:: fun _ ->
-  test_to_float
-    (List.nth (Stock.read_csv "../data/financial.csv") 21)
-    "Suntrust banks"
-    [270.5; 265.9; 275.0; 260.1] );
-( "test to_float Northern Trust" >:: fun _ ->
-  test_to_float
-    (List.nth (Stock.read_csv "../data/financial.csv") 22)
-    "Northern trust"
-    [360.4; 358.6; 362.7; 355.5] );
-( "test to_float State Street" >:: fun _ ->
-  test_to_float
-    (List.nth (Stock.read_csv "../data/financial.csv") 23)
-    "State street"
-    [410.0; 415.2; 407.3; 420.1] );
-( "test to_float TD Bank" >:: fun _ ->
-  test_to_float
-    (List.nth (Stock.read_csv "../data/financial.csv") 24)
-    "Td bank"
-    [375.5; 380.7; 385.2; 390.6] );
-
-(* of_float tests for new entries *)
-( "test of_float Ally Financial" >:: fun _ ->
-  test_of_float "Ally financial" [300.12; 312.45; 295.00; 305.6] );
-( "test of_float BB&T Corp" >:: fun _ ->
-  test_of_float "Bb&t corp" [200.45; 250.10; 210.3; 220.5] );
-( "test of_float Fifth Third Bancorp" >:: fun _ ->
-  test_of_float "Fifth third bancorp" [185.4; 190.6; 179.2; 188.5] );
-( "test of_float Regions Financial" >:: fun _ ->
-  test_of_float "Regions financial" [145.9; 150.4; 143.0; 149.9] );
-( "test of_float KeyCorp" >:: fun _ ->
-  test_of_float "Keycorp" [190.2; 210.8; 205.1; 202.3] );
-( "test of_float M&T Bank" >:: fun _ ->
-  test_of_float "M&t bank" [299.3; 310.6; 305.4; 315.2] );
-( "test of_float SunTrust Banks" >:: fun _ ->
-  test_of_float "Suntrust banks" [270.5; 265.9; 275.0; 260.1] );
-( "test of_float Northern Trust" >:: fun _ ->
-  test_of_float "Northern trust" [360.4; 358.6; 362.7; 355.5] );
-( "test of_float State Street" >:: fun _ ->
-  test_of_float "State street" [410.0; 415.2; 407.3; 420.1] );
-( "test of_float TD Bank" >:: fun _ ->
-  test_of_float "Td bank" [375.5; 380.7; 385.2; 390.6] );
-
+         ( "test get_prices Ally Financial" >:: fun _ ->
+           test_get_prices "Ally financial"
+             [ 300.12; 312.45; 295.00; 305.6 ]
+             "../data/financial.csv" );
+         ( "test get_prices BB&T Corp" >:: fun _ ->
+           test_get_prices "Bb&t corp"
+             [ 200.45; 250.10; 210.3; 220.5 ]
+             "../data/financial.csv" );
+         ( "test get_prices Fifth Third Bancorp" >:: fun _ ->
+           test_get_prices "Fifth third bancorp"
+             [ 185.4; 190.6; 179.2; 188.5 ]
+             "../data/financial.csv" );
+         ( "test get_prices Regions Financial" >:: fun _ ->
+           test_get_prices "Regions financial"
+             [ 145.9; 150.4; 143.0; 149.9 ]
+             "../data/financial.csv" );
+         ( "test get_prices KeyCorp" >:: fun _ ->
+           test_get_prices "Keycorp"
+             [ 190.2; 210.8; 205.1; 202.3 ]
+             "../data/financial.csv" );
+         ( "test get_prices M&T Bank" >:: fun _ ->
+           test_get_prices "M&t bank"
+             [ 299.3; 310.6; 305.4; 315.2 ]
+             "../data/financial.csv" );
+         ( "test get_prices SunTrust Banks" >:: fun _ ->
+           test_get_prices "Suntrust banks"
+             [ 270.5; 265.9; 275.0; 260.1 ]
+             "../data/financial.csv" );
+         ( "test get_prices Northern Trust" >:: fun _ ->
+           test_get_prices "Northern trust"
+             [ 360.4; 358.6; 362.7; 355.5 ]
+             "../data/financial.csv" );
+         ( "test get_prices State Street" >:: fun _ ->
+           test_get_prices "State street"
+             [ 410.0; 415.2; 407.3; 420.1 ]
+             "../data/financial.csv" );
+         ( "test get_prices TD Bank" >:: fun _ ->
+           test_get_prices "Td bank"
+             [ 375.5; 380.7; 385.2; 390.6 ]
+             "../data/financial.csv" );
+         (* update_prices tests for new entries (varying patterns) *)
+         ( "test update_prices high Ally Financial" >:: fun _ ->
+           test_update_prices "high" "Ally financial"
+             [ 300.12; 312.45; 295.00; 305.6 ] );
+         ( "test update_prices mid BB&T Corp" >:: fun _ ->
+           test_update_prices "mid" "Bb&t corp" [ 200.45; 250.10; 210.3; 220.5 ]
+         );
+         ( "test update_prices low Fifth Third Bancorp" >:: fun _ ->
+           test_update_prices "low" "Fifth third bancorp"
+             [ 185.4; 190.6; 179.2; 188.5 ] );
+         ( "test update_prices high Regions Financial" >:: fun _ ->
+           test_update_prices "high" "Regions financial"
+             [ 145.9; 150.4; 143.0; 149.9 ] );
+         ( "test update_prices mid KeyCorp" >:: fun _ ->
+           test_update_prices "mid" "Keycorp" [ 190.2; 210.8; 205.1; 202.3 ] );
+         ( "test update_prices low M&T Bank" >:: fun _ ->
+           test_update_prices "low" "M&t bank" [ 299.3; 310.6; 305.4; 315.2 ] );
+         ( "test update_prices high SunTrust Banks" >:: fun _ ->
+           test_update_prices "high" "Suntrust banks"
+             [ 270.5; 265.9; 275.0; 260.1 ] );
+         ( "test update_prices mid Northern Trust" >:: fun _ ->
+           test_update_prices "mid" "Northern trust"
+             [ 360.4; 358.6; 362.7; 355.5 ] );
+         ( "test update_prices low State Street" >:: fun _ ->
+           test_update_prices "low" "State street"
+             [ 410.0; 415.2; 407.3; 420.1 ] );
+         ( "test update_prices high TD Bank" >:: fun _ ->
+           test_update_prices "high" "Td bank" [ 375.5; 380.7; 385.2; 390.6 ] );
+         (* to_float tests for new entries *)
+         ( "test to_float Ally Financial" >:: fun _ ->
+           test_to_float
+             (List.nth (Stock.read_csv "../data/financial.csv") 15)
+             "Ally financial"
+             [ 300.12; 312.45; 295.00; 305.6 ] );
+         ( "test to_float BB&T Corp" >:: fun _ ->
+           test_to_float
+             (List.nth (Stock.read_csv "../data/financial.csv") 16)
+             "Bb&t corp"
+             [ 200.45; 250.10; 210.3; 220.5 ] );
+         ( "test to_float Fifth Third Bancorp" >:: fun _ ->
+           test_to_float
+             (List.nth (Stock.read_csv "../data/financial.csv") 17)
+             "Fifth third bancorp"
+             [ 185.4; 190.6; 179.2; 188.5 ] );
+         ( "test to_float Regions Financial" >:: fun _ ->
+           test_to_float
+             (List.nth (Stock.read_csv "../data/financial.csv") 18)
+             "Regions financial"
+             [ 145.9; 150.4; 143.0; 149.9 ] );
+         ( "test to_float KeyCorp" >:: fun _ ->
+           test_to_float
+             (List.nth (Stock.read_csv "../data/financial.csv") 19)
+             "Keycorp"
+             [ 190.2; 210.8; 205.1; 202.3 ] );
+         ( "test to_float M&T Bank" >:: fun _ ->
+           test_to_float
+             (List.nth (Stock.read_csv "../data/financial.csv") 20)
+             "M&t bank"
+             [ 299.3; 310.6; 305.4; 315.2 ] );
+         ( "test to_float SunTrust Banks" >:: fun _ ->
+           test_to_float
+             (List.nth (Stock.read_csv "../data/financial.csv") 21)
+             "Suntrust banks"
+             [ 270.5; 265.9; 275.0; 260.1 ] );
+         ( "test to_float Northern Trust" >:: fun _ ->
+           test_to_float
+             (List.nth (Stock.read_csv "../data/financial.csv") 22)
+             "Northern trust"
+             [ 360.4; 358.6; 362.7; 355.5 ] );
+         ( "test to_float State Street" >:: fun _ ->
+           test_to_float
+             (List.nth (Stock.read_csv "../data/financial.csv") 23)
+             "State street"
+             [ 410.0; 415.2; 407.3; 420.1 ] );
+         ( "test to_float TD Bank" >:: fun _ ->
+           test_to_float
+             (List.nth (Stock.read_csv "../data/financial.csv") 24)
+             "Td bank"
+             [ 375.5; 380.7; 385.2; 390.6 ] );
+         (* of_float tests for new entries *)
+         ( "test of_float Ally Financial" >:: fun _ ->
+           test_of_float "Ally financial" [ 300.12; 312.45; 295.00; 305.6 ] );
+         ( "test of_float BB&T Corp" >:: fun _ ->
+           test_of_float "Bb&t corp" [ 200.45; 250.10; 210.3; 220.5 ] );
+         ( "test of_float Fifth Third Bancorp" >:: fun _ ->
+           test_of_float "Fifth third bancorp" [ 185.4; 190.6; 179.2; 188.5 ] );
+         ( "test of_float Regions Financial" >:: fun _ ->
+           test_of_float "Regions financial" [ 145.9; 150.4; 143.0; 149.9 ] );
+         ( "test of_float KeyCorp" >:: fun _ ->
+           test_of_float "Keycorp" [ 190.2; 210.8; 205.1; 202.3 ] );
+         ( "test of_float M&T Bank" >:: fun _ ->
+           test_of_float "M&t bank" [ 299.3; 310.6; 305.4; 315.2 ] );
+         ( "test of_float SunTrust Banks" >:: fun _ ->
+           test_of_float "Suntrust banks" [ 270.5; 265.9; 275.0; 260.1 ] );
+         ( "test of_float Northern Trust" >:: fun _ ->
+           test_of_float "Northern trust" [ 360.4; 358.6; 362.7; 355.5 ] );
+         ( "test of_float State Street" >:: fun _ ->
+           test_of_float "State street" [ 410.0; 415.2; 407.3; 420.1 ] );
+         ( "test of_float TD Bank" >:: fun _ ->
+           test_of_float "Td bank" [ 375.5; 380.7; 385.2; 390.6 ] );
          ( "test get_prices US Bancorp" >:: fun _ ->
            test_get_prices "US bancorp"
              [ 161.17; 290.72; 389.38; 152.9 ]
@@ -652,36 +751,40 @@ let tests =
          ( "test read_csv ../data/financial.csv" >:: fun _ ->
            assert_equal
              [
-              Stock.of_float "Jp morgan" [ 328.66; 488.23; 370.07; 292.7 ];
-              Stock.of_float "Bank of america" [ 189.94; 355.76; 155.91; 325.06 ];
-              Stock.of_float "Wells fargo" [ 225.91; 200.61; 334.89; 190.99 ];
-              Stock.of_float "Citi group" [ 238.48; 223.81; 364.25; 433.55 ];
-              Stock.of_float "Goldman sachs" [ 433.44; 128.63; 499.54; 308.67 ];
-              Stock.of_float "Morgan stanley" [ 422.44; 460.85; 159.41; 372.54 ];
-              Stock.of_float "American express"
-                [ 333.81; 116.17; 288.77; 140.37 ];
-              Stock.of_float "Us bancorp" [ 161.17; 290.72; 389.38; 152.9 ];
-              Stock.of_float "Pnc financial" [ 479.51; 451.17; 295.25; 213.26 ];
-              Stock.of_float "Capital one" [ 460.08; 159.97; 323.45; 221.71 ];
-              Stock.of_float "Charles schwab" [ 199.89; 433.42; 390.73; 353.58 ];
-              Stock.of_float "Blackrock" [ 473.75; 484.41; 233.95; 433.61 ];
-              Stock.of_float "American international" [ 219.67; 478.28; 176.9; 417.88 ];
-              Stock.of_float "Metlife" [ 180.31; 194.68; 354.59; 445.64 ];
-              Stock.of_float "Cme group" [ 349.82; 312.66; 299.36; 331.26 ];
-              (* Newly added lines *)
-              Stock.of_float "Ally financial" [300.12; 312.45; 295.00; 305.6];
-              Stock.of_float "Bb&t corp" [200.45; 250.10; 210.3; 220.5];
-              Stock.of_float "Fifth third bancorp" [185.4; 190.6; 179.2; 188.5];
-              Stock.of_float "Regions financial" [145.9; 150.4; 143.0; 149.9];
-              Stock.of_float "Keycorp" [190.2; 210.8; 205.1; 202.3];
-              Stock.of_float "M&t bank" [299.3; 310.6; 305.4; 315.2];
-              Stock.of_float "Suntrust banks" [270.5; 265.9; 275.0; 260.1];
-              Stock.of_float "Northern trust" [360.4; 358.6; 362.7; 355.5];
-              Stock.of_float "State street" [410.0; 415.2; 407.3; 420.1];
-              Stock.of_float "Td bank" [375.5; 380.7; 385.2; 390.6];
+               Stock.of_float "Jp morgan" [ 328.66; 488.23; 370.07; 292.7 ];
+               Stock.of_float "Bank of america"
+                 [ 189.94; 355.76; 155.91; 325.06 ];
+               Stock.of_float "Wells fargo" [ 225.91; 200.61; 334.89; 190.99 ];
+               Stock.of_float "Citi group" [ 238.48; 223.81; 364.25; 433.55 ];
+               Stock.of_float "Goldman sachs" [ 433.44; 128.63; 499.54; 308.67 ];
+               Stock.of_float "Morgan stanley"
+                 [ 422.44; 460.85; 159.41; 372.54 ];
+               Stock.of_float "American express"
+                 [ 333.81; 116.17; 288.77; 140.37 ];
+               Stock.of_float "Us bancorp" [ 161.17; 290.72; 389.38; 152.9 ];
+               Stock.of_float "Pnc financial" [ 479.51; 451.17; 295.25; 213.26 ];
+               Stock.of_float "Capital one" [ 460.08; 159.97; 323.45; 221.71 ];
+               Stock.of_float "Charles schwab"
+                 [ 199.89; 433.42; 390.73; 353.58 ];
+               Stock.of_float "Blackrock" [ 473.75; 484.41; 233.95; 433.61 ];
+               Stock.of_float "American international"
+                 [ 219.67; 478.28; 176.9; 417.88 ];
+               Stock.of_float "Metlife" [ 180.31; 194.68; 354.59; 445.64 ];
+               Stock.of_float "Cme group" [ 349.82; 312.66; 299.36; 331.26 ];
+               (* Newly added lines *)
+               Stock.of_float "Ally financial" [ 300.12; 312.45; 295.00; 305.6 ];
+               Stock.of_float "Bb&t corp" [ 200.45; 250.10; 210.3; 220.5 ];
+               Stock.of_float "Fifth third bancorp"
+                 [ 185.4; 190.6; 179.2; 188.5 ];
+               Stock.of_float "Regions financial" [ 145.9; 150.4; 143.0; 149.9 ];
+               Stock.of_float "Keycorp" [ 190.2; 210.8; 205.1; 202.3 ];
+               Stock.of_float "M&t bank" [ 299.3; 310.6; 305.4; 315.2 ];
+               Stock.of_float "Suntrust banks" [ 270.5; 265.9; 275.0; 260.1 ];
+               Stock.of_float "Northern trust" [ 360.4; 358.6; 362.7; 355.5 ];
+               Stock.of_float "State street" [ 410.0; 415.2; 407.3; 420.1 ];
+               Stock.of_float "Td bank" [ 375.5; 380.7; 385.2; 390.6 ];
              ]
              (Stock.read_csv "../data/financial.csv") );
-
          (* Portfolio Module Tests are here*)
          ( "test create_portfolio" >:: fun _ ->
            test_create_portfolio 10000.0 10000.0 );
@@ -749,6 +852,45 @@ let tests =
                test_sell_stock_increases_balance p "Apple" 5 test_stocks 9260.0
                  [ ("Apple", 5) ]
            | None -> assert_failure "Failed to buy initial stock for testing" );
+         ( "test buy stock invalid name" >:: fun _ ->
+           let portfolio = Portfolio.create_portfolio 10000.0 in
+           test_buy_stock_invalid_name portfolio "InvalidStockName" stocks );
+         ( "test portfolio with mixed stocks" >:: fun _ ->
+           let portfolio = Portfolio.create_portfolio 10000.0 in
+           match Portfolio.buy_stock portfolio "Apple" 10 stocks with
+           | Some p ->
+               test_portfolio_with_mixed_stocks p stocks
+                 [ ("Apple", 10, 1480.0) ]
+                 8520.0
+           | None -> assert_failure "Failed to initialize portfolio" );
+         ( "test portfolio summary empty" >:: fun _ ->
+           let portfolio = Portfolio.create_portfolio 10000.0 in
+           test_portfolio_summary_empty portfolio stocks );
+         ( "test buy stock large quantity" >:: fun _ ->
+           let portfolio = Portfolio.create_portfolio 10000.0 in
+           test_buy_stock_large_qty portfolio "Apple" stocks );
+         ( "test sell stock zero holdings" >:: fun _ ->
+           let portfolio = Portfolio.create_portfolio 10000.0 in
+           test_sell_stock_zero_holdings portfolio "Apple" test_stocks );
+         ( "test portfolio summary missing prices" >:: fun _ ->
+           let portfolio = Portfolio.create_portfolio 10000.0 in
+           test_portfolio_summary_missing_prices portfolio test_stocks );
+         ( "test buy stock negative price" >:: fun _ ->
+           let portfolio = Portfolio.create_portfolio 10000.0 in
+           test_buy_stock_negative_price portfolio "InvalidStock" test_stocks );
+         ( "test portfolio summary empty portfolio" >:: fun _ ->
+           let portfolio = Portfolio.create_portfolio 0.0 in
+           test_portfolio_summary_empty_portfolio portfolio test_stocks );
+         ( "test sell stock case sensitivity" >:: fun _ ->
+           let portfolio = Portfolio.create_portfolio 10000.0 in
+           test_sell_stock_case_sensitivity portfolio test_stocks );
+         ( "test portfolio summary total calculation" >:: fun _ ->
+           let portfolio = Portfolio.create_portfolio 10000.0 in
+           test_portfolio_summary_total_calculation portfolio test_stocks );
+         ( "test buy and sell stock multiple times" >:: fun _ ->
+           let portfolio = Portfolio.create_portfolio 10000.0 in
+           test_buy_and_sell_stock_multiple_times portfolio "Apple" test_stocks
+         );
        ]
 
 let _ = run_test_tt_main tests
