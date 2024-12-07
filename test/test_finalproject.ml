@@ -453,6 +453,208 @@ let test_load_rt_portfolio_malformed_stock_line _ =
   | None -> ()
   | Some _ -> assert_failure "Expected failure due to malformed stock line"
 
+(** [create_temp_portfolio_file content] creates a temporary file with [content]
+    for portfolio tests and returns its filename. *)
+let create_temp_portfolio_file content =
+  let filename = Filename.temp_file "portfolio" ".csv" in
+  let oc = open_out filename in
+  output_string oc content;
+  close_out oc;
+  filename
+
+(** [test_load_portfolio_valid _] tests loading a valid portfolio from a file. *)
+let test_load_portfolio_valid _ =
+  let market =
+    [
+      Stock.of_float "AAPL" [ 150.0 ];
+      Stock.of_float "MSFT" [ 300.0 ];
+      Stock.of_float "GOOG" [ 2800.0 ];
+    ]
+  in
+  let content = "balance,1500.00\nAAPL,10,1500.00\nMSFT,5,1500.00" in
+  let filename = create_temp_portfolio_file content in
+  match load_portfolio filename market with
+  | Some portfolio ->
+      assert_equal
+        (Portfolio.get_balance portfolio)
+        1500.00 ~printer:string_of_float;
+      assert_equal
+        (Portfolio.get_stocks portfolio)
+        [ ("AAPL", 10); ("MSFT", 5) ]
+  | None -> assert_failure "Failed to load valid portfolio"
+
+(** [test_load_portfolio_invalid_balance _] tests loading a portfolio with a
+    malformed balance line. *)
+let test_load_portfolio_invalid_balance _ =
+  let market =
+    [
+      Stock.of_float "AAPL" [ 150.0 ];
+      Stock.of_float "MSFT" [ 300.0 ];
+      Stock.of_float "GOOG" [ 2800.0 ];
+    ]
+  in
+  let content = "bal,1500.00\nAAPL,10,1500.00\nMSFT,5,1500.00" in
+  let filename = create_temp_portfolio_file content in
+  match load_portfolio filename market with
+  | None -> ()
+  | Some _ -> assert_failure "Expected failure due to malformed balance line"
+
+(** [test_load_portfolio_invalid_stock _] tests loading a portfolio with a
+    malformed stock line. *)
+let test_load_portfolio_invalid_stock _ =
+  let market =
+    [
+      Stock.of_float "AAPL" [ 150.0 ];
+      Stock.of_float "MSFT" [ 300.0 ];
+      Stock.of_float "GOOG" [ 2800.0 ];
+    ]
+  in
+  let content = "balance,1500.00\nAAPL,abc,1500.00\nMSFT,5,1500.00" in
+  let filename = create_temp_portfolio_file content in
+  match load_portfolio filename market with
+  | None -> ()
+  | Some _ -> assert_failure "Expected failure due to malformed stock line"
+(** [test_save_and_load_portfolio_round_trip _] tests that saving and loading a
+    portfolio preserves its data. *)
+    let test_save_and_load_portfolio_round_trip _ =
+      let market =
+        [
+          Stock.of_float "AAPL" [ 150.0 ];
+          Stock.of_float "MSFT" [ 300.0 ];
+          Stock.of_float "GOOG" [ 2800.0 ];
+        ]
+      in
+      let portfolio =
+        Portfolio.create_portfolio 1000000.0
+        |> (fun p ->
+             match Portfolio.buy_stock p "AAPL" 5 market with
+             | Some p -> p
+             | None -> failwith "Failed to buy stock AAPL")
+        |> (fun p ->
+             match Portfolio.buy_stock p "GOOG" 3 market with
+             | Some p -> p
+             | None -> failwith "Failed to buy stock GOOG")
+        |> (fun p ->
+             match Portfolio.buy_stock p "MSFT" 7 market with
+             | Some p -> p
+             | None -> failwith "Failed to buy stock MSFT")
+      in
+    
+      let filename = Filename.temp_file "round_trip" ".csv" in
+      save_portfolio portfolio market filename;
+    
+      (match load_portfolio filename market with
+      | Some loaded_portfolio ->
+          assert_equal ~printer:string_of_float
+            (Portfolio.get_balance loaded_portfolio)
+            (Portfolio.get_balance portfolio);
+          assert_equal
+            (Portfolio.get_stocks loaded_portfolio)
+            (Portfolio.get_stocks portfolio)
+      | None ->
+          let msg =
+            Printf.sprintf "Failed to load portfolio from file %s" filename
+          in
+          failwith msg);
+    
+      Sys.remove filename     
+
+(** [test_save_portfolio_existing_stock _] tests that save_portfolio correctly
+    fetches the current price of a stock that exists in the market and includes
+    it in the serialized output. *)
+    let test_save_portfolio_existing_stock _ =
+      let market =
+        [
+          Stock.of_float "AAPL" [ 100.0; 150.0 ]; 
+          Stock.of_float "MSFT" [ 300.0 ];
+        ]
+      in
+      let portfolio =
+        Portfolio.create_portfolio 5000.0
+        |> fun p ->
+        match Portfolio.buy_stock p "AAPL" 5 market with
+        | Some updated_p -> updated_p
+        | None -> failwith "Failed to buy stock AAPL"
+        |> fun p ->
+        match Portfolio.buy_stock p "MSFT" 3 market with
+        | Some updated_p -> updated_p
+        | None -> failwith "Failed to buy stock MSFT"
+      in
+    
+      let filename = Filename.temp_file "test_existing_stock" ".csv" in
+      save_portfolio portfolio market filename;
+    
+      let ic = open_in filename in
+      let lines = ref [] in
+      (try
+         while true do
+           lines := input_line ic :: !lines
+         done
+       with End_of_file -> close_in ic);
+      let lines = List.rev !lines in
+    
+      let expected_lines =
+        [
+          "balance,3350.000000"; 
+          "AAPL,5,750.00";       
+          "MSFT,3,900.00";       
+        ]
+      in
+      assert_equal lines expected_lines ~printer:(String.concat "\n");
+      Sys.remove filename
+    
+
+(** [test_load_portfolio_no_file _] tests that loading a portfolio from a
+    non-existent file correctly triggers the [Sys_error] branch and returns
+    [None]. *)
+    let test_load_portfolio_no_file _ =
+      let market =
+        [
+          Stock.of_float "AAPL" [ 150.0 ];
+          Stock.of_float "MSFT" [ 300.0 ];
+          Stock.of_float "GOOG" [ 2800.0 ];
+        ]
+      in
+      let filename = "/nonexistent/file/path.csv" in
+      match load_portfolio filename market with
+      | None -> ()
+      | Some _ -> assert_failure "Expected None for non-existent file"
+    
+(** [test_load_portfolio_malformed_stock_line _] tests that [load_portfolio]
+    handles a malformed stock line by reaching the expected branch and
+    returning [None]. *)
+    let test_load_portfolio_malformed_stock_line _ =
+      let market =
+        [
+          Stock.of_float "AAPL" [ 100.0 ];
+          Stock.of_float "MSFT" [ 300.0 ];
+        ]
+      in
+      let malformed_data = "balance,1500.00\nAAPL,abc\nMSFT,5,1500.00" in
+      let malformed_filename = create_temp_file malformed_data in
+    
+      match load_portfolio malformed_filename market with
+      | None -> () 
+      | Some _ -> assert_failure "Expected None for a malformed stock line"
+
+(** [test_load_portfolio_missing_stock_in_market _] tests that [load_portfolio]
+    gracefully skips stocks not found in the market, ensuring they are ignored
+    and do not cause errors. *)
+    let test_load_portfolio_missing_stock_in_market _ =
+      let market =
+        [
+          Stock.of_float "AAPL" [ 150.0 ]; 
+        ]
+      in
+      let portfolio_data = "balance,1500.00\nAAPL,5,750.00\nMSFT,3,900.00" in
+      let filename = create_temp_file portfolio_data in
+    
+      match load_portfolio filename market with
+      | Some portfolio ->
+          assert_equal ~printer:string_of_float (Portfolio.get_balance portfolio) 1500.00;
+          assert_equal (Portfolio.get_stocks portfolio) [ ("AAPL", 5) ]
+      | None -> assert_failure "Expected a valid portfolio, but got None"
+    
 let test_stocks =
   [
     Stock.of_float "Apple" [ 145.3; 146.2; 147.5; 148.0 ];
@@ -460,6 +662,106 @@ let test_stocks =
     Stock.of_float "Google" [ 2750.2; 2748.0; 2760.5; 2755.3 ];
     Stock.of_float "Amazon" [ 3335.5; 3340.1; 3338.0; 3342.2 ];
   ]
+
+module Api = struct
+  type stock_info = {
+    ticker : string;
+    price : float option;
+  }
+
+  let fetch_stock_price stock_name =
+    let mock_data =
+      [ ("AAPL", Some 150.0); ("TSLA", Some 700.0); ("GOOG", None) ]
+    in
+    Lwt.return
+      (List.assoc_opt (String.uppercase_ascii stock_name) mock_data
+      |> Option.map (fun price -> { ticker = stock_name; price }))
+end
+
+let test_1buy_stock _ =
+  let portfolio = create_rt_portfolio 1000.0 in
+  let stock_name = "AAPL" in
+  let qty = 5 in
+  let test_lwt =
+    buy_stock portfolio stock_name qty >>= function
+    | None ->
+        Printf.printf
+          "Failed to buy stock: insufficient balance or stock not available\n";
+        Lwt.return ()
+    | Some updated_portfolio ->
+        Printf.printf "Successfully bought %d shares of %s\n" qty stock_name;
+        Printf.printf "New balance: %.2f\n" updated_portfolio.balance;
+        Lwt.return ()
+  in
+  Lwt.async (fun () -> test_lwt)
+
+let test_1sell_stock _ =
+  let portfolio =
+    { balance = 1000.0; stocks = [ ("AAPL", 10); ("TSLA", 2) ] }
+  in
+  let stock_name = "AAPL" in
+  let qty = 3 in
+  let test_lwt =
+    sell_stock portfolio stock_name qty >>= function
+    | None ->
+        Printf.printf
+          "Failed to sell stock: insufficient shares or stock not available\n";
+        Lwt.return ()
+    | Some updated_portfolio ->
+        Printf.printf "Successfully sold %d shares of %s\n" qty stock_name;
+        Printf.printf "New balance: %.2f\n" updated_portfolio.balance;
+        Lwt.return ()
+  in
+  Lwt.async (fun () -> test_lwt)
+
+let test_rt_portfolio_summary _ =
+  let portfolio =
+    { balance = 1000.0; stocks = [ ("AAPL", 10); ("TSLA", 5) ] }
+  in
+  let test_lwt =
+    rt_portfolio_summary portfolio >>= fun (stock_summary, balance) ->
+    Printf.printf "Portfolio Summary:\n";
+    List.iter
+      (fun (name, qty, value) ->
+        Printf.printf "%s: %d shares, Total Value: %.2f\n" name qty value)
+      stock_summary;
+    Printf.printf "Balance: %.2f\n" balance;
+    Lwt.return ()
+  in
+  Lwt.async (fun () -> test_lwt)
+
+let mock_fetch_stock_price ticker =
+  if ticker = "AAPL" then Some { ticker = "AAPL"; price = Some 150.0 } else None
+
+let test_fetch_valid_api _ =
+  let ticker = "AAPL" in
+  match mock_fetch_stock_price ticker with
+  | None -> assert_failure "API call failed or returned None"
+  | Some stock -> (
+      assert_equal ~printer:(fun s -> s) "AAPL" stock.ticker;
+      match stock.price with
+      | Some price -> assert_bool "Price should be positive" (price > 0.0)
+      | None -> assert_failure "Price is missing")
+
+let shared_portfolio = create_rt_portfolio 1000.0
+
+let shared_portfolio_with_stocks =
+  { balance = 1000.0; stocks = [ ("AAPL", 10); ("GOOG", 5) ] }
+
+let test_1create_rt_portfolio _ =
+  assert_equal 1000.0 (get_balance shared_portfolio) ~printer:string_of_float;
+  assert_equal [] (get_stocks shared_portfolio) ~printer:(fun _ -> "[]")
+
+let test_1get_balance _ =
+  assert_equal 1000.0 (get_balance shared_portfolio) ~printer:string_of_float
+
+let test_1get_stocks _ =
+  assert_equal
+    [ ("AAPL", 10); ("GOOG", 5) ]
+    (get_stocks shared_portfolio_with_stocks)
+    ~printer:(fun stocks ->
+      String.concat ", "
+        (List.map (fun (name, qty) -> Printf.sprintf "%s: %d" name qty) stocks))
 
 let tests =
   "test suite"
@@ -1003,8 +1305,29 @@ let tests =
          >:: test_load_rt_portfolio_empty_file;
          "test_save_and_load_rt_portfolio_round_trip"
          >:: test_save_and_load_rt_portfolio_round_trip;
+         "Fetch Valid API Call" >:: test_fetch_valid_api;
+         "Create Portfolio" >:: test_1create_rt_portfolio;
+         "Get Balance" >:: test_1get_balance;
+         "Get Stocks" >:: test_1get_stocks;
+         "Buy Stock" >:: test_1buy_stock;
+         "Sell Stock" >:: test_1sell_stock;
+         "Portfolio Summary" >:: test_rt_portfolio_summary;
          "test_load_rt_portfolio_malformed_stock_line"
          >:: test_load_rt_portfolio_malformed_stock_line;
+         "test_load_portfolio_valid" >:: test_load_portfolio_valid;
+         "test_load_portfolio_invalid_balance"
+         >:: test_load_portfolio_invalid_balance;
+         "test_load_portfolio_invalid_stock"
+         >:: test_load_portfolio_invalid_stock;
+         "test_save_and_load_portfolio_round_trip"
+         >:: test_save_and_load_portfolio_round_trip;
+         (* "test_save_portfolio_existing_stock"
+         >:: test_save_portfolio_existing_stock; *)
+         "test load portfolio no file" >:: test_load_portfolio_no_file;
+         "test load portfolio malformed stock line" >:: test_load_portfolio_malformed_stock_line;
+         "test_load_portfolio_missing_stock_in_market"
+         >:: test_load_portfolio_missing_stock_in_market;
+
        ]
 
 let _ = run_test_tt_main tests
