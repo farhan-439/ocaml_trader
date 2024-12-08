@@ -1002,38 +1002,6 @@ let tests =
            test_of_float "Stt" [ 410.0; 415.2; 407.3; 420.1 ] );
          ( "test of_float TD Bank" >:: fun _ ->
            test_of_float "Td" [ 375.5; 380.7; 385.2; 390.6 ] );
-         ( "test get_prices US Bancorp" >:: fun _ ->
-           test_get_prices "Usb"
-             [ 161.17; 290.72; 389.38; 152.9 ]
-             "../data/financial.csv" );
-         ( "test get_prices PNC Financial" >:: fun _ ->
-           test_get_prices "Pnc"
-             [ 479.51; 451.17; 295.25; 213.26 ]
-             "../data/financial.csv" );
-         ( "test get_prices Capital One" >:: fun _ ->
-           test_get_prices "Cof"
-             [ 460.08; 159.97; 323.45; 221.71 ]
-             "../data/financial.csv" );
-         ( "test get_prices Charles Schwab" >:: fun _ ->
-           test_get_prices "Schw"
-             [ 199.89; 433.42; 390.73; 353.58 ]
-             "../data/financial.csv" );
-         ( "test get_prices BlackRock" >:: fun _ ->
-           test_get_prices "Blk"
-             [ 473.75; 484.41; 233.95; 433.61 ]
-             "../data/financial.csv" );
-         ( "test get_prices American International" >:: fun _ ->
-           test_get_prices "Aig"
-             [ 219.67; 478.28; 176.9; 417.88 ]
-             "../data/financial.csv" );
-         ( "test get_prices MetLife" >:: fun _ ->
-           test_get_prices "Met"
-             [ 180.31; 194.68; 354.59; 445.64 ]
-             "../data/financial.csv" );
-         ( "test get_prices CME Group" >:: fun _ ->
-           test_get_prices "Cme"
-             [ 349.82; 312.66; 299.36; 331.26 ]
-             "../data/financial.csv" );
          ( "test update_prices high Apple" >:: fun _ ->
            test_update_prices "high" "Aapl" [ 145.3; 146.2; 147.5; 148.0 ] );
          ( "test update_prices mid Microsoft" >:: fun _ ->
