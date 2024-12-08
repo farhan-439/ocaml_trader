@@ -280,9 +280,31 @@ let () =
     match read_line () with
     | "1" ->
         (* Simulated portfolio *)
-        print_endline
-          "Please enter the filename of the stock data (e.g., data/stocks.csv):";
-        let filename = read_line () in
+        Stdlib.print_string "\nChoose Stock Data: ";
+        print_num_enclosed "1" ANSITerminal.yellow;
+        Stdlib.print_string " data/stocks.csv ";
+        print_num_enclosed "2" ANSITerminal.blue;
+        Stdlib.print_string " data/financial.csv ";
+        print_num_enclosed "3" ANSITerminal.magenta;
+        Stdlib.print_string " User Input ";
+
+        let filename =
+          match read_line () with
+          | "1" -> "data/stocks.csv"
+          | "2" -> "data/financial.csv"
+          | "3" ->
+              print_endline
+                "Please enter the filename of the stock data (e.g., \
+                 data/stocks.csv)";
+              read_line ()
+          | _ ->
+              ANSITerminal.print_string
+                [ ANSITerminal.Bold; ANSITerminal.red ]
+                (Printf.sprintf
+                   "❌ Invalid input. Using default data/stocks.csv.\n");
+              "data/stocks.csv"
+        in
+
         let stock_data =
           try read_csv filename
           with _ ->
