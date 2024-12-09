@@ -170,28 +170,18 @@ let rec quantity_input_loop mode =
 let print_yes_no () =
   Stdlib.print_string "(";
   ANSITerminal.print_string
-    [
-      ANSITerminal.green;
-      ANSITerminal.on_black;
-      ANSITerminal.Bold;
-      ANSITerminal.Underlined;
-    ]
+    [ ANSITerminal.green; ANSITerminal.Bold; ANSITerminal.Underlined ]
     "y";
   Stdlib.print_string "/";
   ANSITerminal.print_string
-    [
-      ANSITerminal.red;
-      ANSITerminal.on_black;
-      ANSITerminal.Bold;
-      ANSITerminal.Underlined;
-    ]
+    [ ANSITerminal.red; ANSITerminal.Bold; ANSITerminal.Underlined ]
     "n";
   Stdlib.print_string ") \n"
 
 let print_num_enclosed num color =
   Stdlib.print_string "(";
   ANSITerminal.print_string
-    [ color; ANSITerminal.on_black; ANSITerminal.Bold; ANSITerminal.Underlined ]
+    [ color; ANSITerminal.Bold; ANSITerminal.Underlined ]
     num;
   Stdlib.print_string ")"
 
@@ -242,7 +232,6 @@ let () =
   ANSITerminal.print_string
     [
       ANSITerminal.cyan;
-      ANSITerminal.on_black;
       ANSITerminal.Blink;
       ANSITerminal.Inverse;
       ANSITerminal.Bold;
@@ -260,21 +249,11 @@ let () =
     Stdlib.print_string " real-time portfolio? ";
     Stdlib.print_string "(";
     ANSITerminal.print_string
-      [
-        ANSITerminal.yellow;
-        ANSITerminal.on_black;
-        ANSITerminal.Bold;
-        ANSITerminal.Underlined;
-      ]
+      [ ANSITerminal.yellow; ANSITerminal.Bold; ANSITerminal.Underlined ]
       "1";
     Stdlib.print_string "/";
     ANSITerminal.print_string
-      [
-        ANSITerminal.blue;
-        ANSITerminal.on_black;
-        ANSITerminal.Bold;
-        ANSITerminal.Underlined;
-      ]
+      [ ANSITerminal.blue; ANSITerminal.Bold; ANSITerminal.Underlined ]
       "2";
     Stdlib.print_string ") \n";
     match read_line () with
@@ -330,10 +309,7 @@ let () =
           (fun x ->
             ANSITerminal.print_string
               [
-                ANSITerminal.magenta;
-                ANSITerminal.on_black;
-                ANSITerminal.Bold;
-                ANSITerminal.Underlined;
+                ANSITerminal.magenta; ANSITerminal.Bold; ANSITerminal.Underlined;
               ]
               ((x |> to_float |> fst |> String.uppercase_ascii) ^ ":");
             Stdlib.print_string " ";
@@ -392,7 +368,6 @@ let () =
                   ANSITerminal.print_string
                     [
                       ANSITerminal.magenta;
-                      ANSITerminal.on_black;
                       ANSITerminal.Bold;
                       ANSITerminal.Underlined;
                     ]
@@ -450,7 +425,6 @@ let () =
                     ANSITerminal.print_string
                       [
                         ANSITerminal.magenta;
-                        ANSITerminal.on_black;
                         ANSITerminal.Bold;
                         ANSITerminal.Underlined;
                       ]
@@ -602,7 +576,6 @@ let () =
               ANSITerminal.print_string
                 [
                   ANSITerminal.magenta;
-                  ANSITerminal.on_black;
                   ANSITerminal.Bold;
                   ANSITerminal.Underlined;
                 ]
@@ -618,30 +591,15 @@ let () =
              updating, or exit? ";
           Stdlib.print_string "(";
           ANSITerminal.print_string
-            [
-              ANSITerminal.yellow;
-              ANSITerminal.on_black;
-              ANSITerminal.Bold;
-              ANSITerminal.Underlined;
-            ]
+            [ ANSITerminal.yellow; ANSITerminal.Bold; ANSITerminal.Underlined ]
             "1";
           Stdlib.print_string "/";
           ANSITerminal.print_string
-            [
-              ANSITerminal.blue;
-              ANSITerminal.on_black;
-              ANSITerminal.Bold;
-              ANSITerminal.Underlined;
-            ]
+            [ ANSITerminal.blue; ANSITerminal.Bold; ANSITerminal.Underlined ]
             "2";
           Stdlib.print_string "/";
           ANSITerminal.print_string
-            [
-              ANSITerminal.magenta;
-              ANSITerminal.on_black;
-              ANSITerminal.Bold;
-              ANSITerminal.Underlined;
-            ]
+            [ ANSITerminal.magenta; ANSITerminal.Bold; ANSITerminal.Underlined ]
             "3";
           Stdlib.print_string ") \n";
           let input = read_line () in
