@@ -318,7 +318,7 @@ let () =
         print_endline "";
         print_endline "Stock prices updated.";
 
-        let portfolio_file = "user_portfolio.json" in
+        let portfolio_file = "user_portfolio.csv" in
         let portfolio =
           if Sys.file_exists portfolio_file then (
             Printf.printf "Existing portfolio found. Loading from %s...\n"
@@ -614,7 +614,7 @@ let () =
         earnings_call new_stocks
     | "2" ->
         (* Real-time portfolio *)
-        let portfolio_file = "user_portfolio_rt.json" in
+        let portfolio_file = "user_portfolio_rt.csv" in
         let portfolio =
           if Sys.file_exists portfolio_file then (
             Printf.printf "Existing portfolio found. Loading from %s...\n"
