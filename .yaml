@@ -1,8 +1,8 @@
 ---
 # Members of your group.
 group:
-  - name: Ahmed Abdulla
-    netid: aaa384
+  - name: [Ahmed Abdulla]
+    netid: [aaa384]
   - name: [Farhan Mashrur]
     netid: [fm454]
   - name: [Nick Spoto ]
@@ -11,6 +11,7 @@ group:
     netid: [tg432]
   - name: [Yash Chatha]
     netid: [yc2727]
+
 # Your PM.
 pm:
   name: [CJ Aggarwa]
@@ -18,7 +19,7 @@ pm:
 # Set to false if you don't want your gallery entry to be public.
 publish: true
 # Pithy title
-title: "Stock Simulator 3110"
+title: "Ocaml Trader"
 # GitHub repository link (use Cornell GitHub if it's private).
 git-repo: "https://github.coecis.cornell.edu/tg432/cs3110-final-project"
 # Replace the URL with your own demo video link.
@@ -27,8 +28,11 @@ demo-video-url: "https://youtu.be/VNapdHWKoBw"
 desc: >
   Our project is a stock simulation system that allows users to simulate stock
   trading with a set budget. Users can buy and sell stocks, track portfolio 
-  performance over time.
+  performance over time, and manage a real-time portfolio with live market 
+  updates.
 
   This project demonstrates skills in OCaml programming, user interface 
-  design, and financial data handling to create an educational tool for 
-  budding investors.
+  design, asynchronous programming with Lwt, and financial data handling to 
+  create an educational tool for budding investors. It includes features for 
+  both simulated and real-time stock trading, providing a comprehensive 
+  learning experience.
