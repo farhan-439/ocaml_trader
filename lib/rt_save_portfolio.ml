@@ -14,13 +14,10 @@ let save_rt_portfolio (portfolio : Rt_portfolio.rt_portfolio)
     | (name, qty, value) :: t ->
         add_stock_data (acc @ [ Printf.sprintf "%s,%d" name qty ]) t
   in
-  print_endline "Here's what you're saving: \n";
-  add_stock_data data summary |> List.iter print_endline;
   let csv_data = String.concat "\n" (add_stock_data data summary) in
   let oc = open_out filename in
   output_string oc csv_data;
-  close_out oc;
-  Printf.printf "Portfolio saved to %s\n" filename
+  close_out oc
 
 let load_rt_portfolio (filename : string) : Rt_portfolio.rt_portfolio option =
   try
@@ -35,7 +32,6 @@ let load_rt_portfolio (filename : string) : Rt_portfolio.rt_portfolio option =
       in
       read_lines []
     in
-    print_endline "\nLoaded portfolio data below: \n";
     List.iter print_endline lines;
     (* Parse the balance line *)
     let balance =
@@ -71,6 +67,3 @@ let load_rt_portfolio (filename : string) : Rt_portfolio.rt_portfolio option =
     | Some x -> Some (update_rt_balance x balance)
     | None -> None
   with _ -> None
-
-let serialize_rt_portfolio portfolio = failwith "unimplemented"
-let deserialize_rt_portfolio data = failwith "unimplemented"
