@@ -3,3 +3,6 @@ _opam/
 _coverage/
 user_portfolio.json
 user_portfolio_rt.json
+user_portfolio.csv
+user_portfolio_rt.json
+gitlog.txt
