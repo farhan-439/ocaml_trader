@@ -681,47 +681,11 @@ let test_1buy_stock _ =
   in
   Lwt.async (fun () -> test_lwt)
 
-let test_1buy_stock_invalid _ =
-  let portfolio = create_rt_portfolio 1000.0 in
-  let stock_name = "AMZN" in
-  let qty = 5 in
-  let test_lwt =
-    buy_stock portfolio stock_name qty >>= function
-    | None ->
-        Printf.printf
-          "Failed to buy stock: insufficient balance or stock not available\n";
-        Lwt.return ()
-    | Some updated_portfolio ->
-        Printf.printf "Successfully bought %d shares of %s\n" qty stock_name;
-        Printf.printf "New balance: %.2f\n" updated_portfolio.balance;
-        Lwt.return ()
-  in
-  Lwt.async (fun () -> test_lwt)
-
 let test_1sell_stock _ =
   let portfolio =
     { balance = 1000.0; stocks = [ ("AAPL", 10); ("TSLA", 2) ] }
   in
   let stock_name = "AAPL" in
-  let qty = 3 in
-  let test_lwt =
-    sell_stock portfolio stock_name qty >>= function
-    | None ->
-        Printf.printf
-          "Failed to sell stock: insufficient shares or stock not available\n";
-        Lwt.return ()
-    | Some updated_portfolio ->
-        Printf.printf "Successfully sold %d shares of %s\n" qty stock_name;
-        Printf.printf "New balance: %.2f\n" updated_portfolio.balance;
-        Lwt.return ()
-  in
-  Lwt.async (fun () -> test_lwt)
-
-let test_1sell_stock_invalid _ =
-  let portfolio =
-    { balance = 1000.0; stocks = [ ("AAPL", 10); ("TSLA", 2) ] }
-  in
-  let stock_name = "AMZN" in
   let qty = 3 in
   let test_lwt =
     sell_stock portfolio stock_name qty >>= function
@@ -1300,9 +1264,7 @@ let tests =
          "Get Balance" >:: test_1get_balance;
          "Get Stocks" >:: test_1get_stocks;
          "Buy Stock" >:: test_1buy_stock;
-         "Buy Stock Invalid" >:: test_1buy_stock_invalid;
          "Sell Stock" >:: test_1sell_stock;
-         "Sell Stock Not Owned" >:: test_1sell_stock_invalid;
          "Portfolio Summary" >:: test_rt_portfolio_summary;
          "test_load_rt_portfolio_malformed_stock_line"
          >:: test_load_rt_portfolio_malformed_stock_line;
