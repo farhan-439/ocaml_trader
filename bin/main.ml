@@ -383,6 +383,20 @@ let () =
 
           match read_line () with
           | "1" ->
+              List.iter
+                (fun x ->
+                  ANSITerminal.print_string
+                    [
+                      ANSITerminal.magenta;
+                      ANSITerminal.on_black;
+                      ANSITerminal.Bold;
+                      ANSITerminal.Underlined;
+                    ]
+                    ((x |> to_float |> fst |> String.uppercase_ascii) ^ ":");
+                  Stdlib.print_string " ";
+                  x |> to_float |> snd |> print_prices)
+                new_stocks;
+              print_endline "";
               print_endline "Enter stock name to buy:";
               let stock_name =
                 try String.lowercase_ascii (read_line ())
