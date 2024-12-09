@@ -6,6 +6,16 @@ type rt_portfolio = {
   stocks : (string * int) list;
 }
 
+(** Abstraction Function (AF):
+    - A value {balance; stocks} represents a real-time portfolio with a cash balance of [balance] and a list of stocks [stocks].
+    - Each element in [stocks] is a pair (stock_name, quantity) where [stock_name] is the name of the stock and [quantity] is the number of shares owned.
+
+    Representation Invariant (RI):
+    - [balance] must be non-negative.
+    - [stocks] must not contain duplicate stock names.
+    - [quantity] in each (stock_name, quantity) pair must be positive.
+*)
+
 let create_rt_portfolio initial_balance =
   { balance = initial_balance; stocks = [] }
 

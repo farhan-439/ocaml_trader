@@ -1,5 +1,16 @@
 type t = string * float list
 
+
+(** Abstraction Function (AF):
+    - A value (name, prices) represents a stock with the name [name] and a list of historical prices [prices].
+    - [name] is the name of the stock.
+    - [prices] is a list of floats representing the historical prices of the stock, where the last element is the most recent price.
+
+    Representation Invariant (RI):
+    - [name] must be a non-empty string.
+    - [prices] must be a non-empty list of non-negative floats.
+*)
+
 let () = Random.self_init ()
 
 let rec get_prices (name : string) (lst : t list) =

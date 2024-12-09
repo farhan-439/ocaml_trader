@@ -7,6 +7,17 @@ type t = {
   price : float option;
 }
 
+(* Abstraction Function:
+ *   t represents a stock with a ticker symbol and an optional price.
+ *   - ticker is the stock's ticker symbol.
+ *   - price is the current price of the stock, or None if the price is unavailable.
+ *
+ * Representation Invariant:
+ *   - ticker is a non-empty string.
+ *   - price, if present, is a non-negative float.
+ *)
+
+
 let fetch_stock_price ticker =
   let url =
     Printf.sprintf "https://finnhub.io/api/v1/quote?symbol=%s&token=%s" ticker
