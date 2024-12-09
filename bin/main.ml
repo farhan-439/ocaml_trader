@@ -316,21 +316,6 @@ let () =
             read_csv "data/stocks.csv"
         in
 
-        print_endline "Enter a stock name to get prices:";
-        let stock_name = String.lowercase_ascii (read_line ()) in
-
-        (try
-           let prices = get_prices stock_name stock_data in
-           print_endline
-             ("Prices for " ^ String.capitalize_ascii stock_name ^ ":");
-           print_prices prices
-         with
-        | Failure msg ->
-            ANSITerminal.print_string
-              [ ANSITerminal.Bold; ANSITerminal.red ]
-              (Printf.sprintf "❌ Error: %s\n" msg)
-        | Not_found -> print_endline "Stock not found.");
-
         let new_stocks =
           List.map
             (let rand = Random.int 10 in
@@ -350,7 +335,7 @@ let () =
                 ANSITerminal.Bold;
                 ANSITerminal.Underlined;
               ]
-              ((x |> to_float |> fst |> String.capitalize_ascii) ^ ":");
+              ((x |> to_float |> fst |> String.uppercase_ascii) ^ ":");
             Stdlib.print_string " ";
             x |> to_float |> snd |> print_prices)
           new_stocks;
@@ -419,7 +404,11 @@ let () =
                       [ ANSITerminal.Bold; ANSITerminal.green ]
                       (Printf.sprintf "✅ Successfully bought %d shares of %s\n"
                          quantity
-                         (String.capitalize_ascii stock_name))
+                         (String.capitalize_ascii stock_name));
+                    let _, balance =
+                      P.portfolio_summary !portfolio new_stocks
+                    in
+                    Printf.printf "Remaining balance: %.2f\n" balance
                 | None ->
                     ANSITerminal.print_string
                       [ ANSITerminal.Bold; ANSITerminal.red ]
@@ -475,7 +464,11 @@ let () =
                             [ ANSITerminal.Bold; ANSITerminal.green ]
                             (Printf.sprintf
                                "✅ Successfully sold %d shares of %s\n" quantity
-                               (String.capitalize_ascii stock_name))
+                               (String.capitalize_ascii stock_name));
+                          let _, balance =
+                            P.portfolio_summary !portfolio new_stocks
+                          in
+                          Printf.printf "Remaining balance: %.2f\n" balance
                       | None ->
                           ANSITerminal.print_string
                             [ ANSITerminal.Bold; ANSITerminal.red ]
