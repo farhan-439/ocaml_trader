@@ -1,4 +1,4 @@
-Hello! In order to use Stock Simulator 3110, please ensure the following is downloaded:
+Hello! In order to use Ocaml Trader, please ensure the following is downloaded:
 
 Installations:
 
