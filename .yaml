@@ -5,7 +5,7 @@ group:
     netid: [aaa384]
   - name: [Farhan Mashrur]
     netid: [fm454]
-  - name: [Nick Spoto ]
+  - name: [Nick Spoto]
     netid: [njs232]
   - name: [Tamer Gabal]
     netid: [tg432]
@@ -19,11 +19,11 @@ pm:
 # Set to false if you don't want your gallery entry to be public.
 publish: true
 # Pithy title
-title: "Ocaml Trader"
+title: "OCaml Trader"
 # GitHub repository link (use Cornell GitHub if it's private).
 git-repo: "https://github.coecis.cornell.edu/tg432/cs3110-final-project"
 # Replace the URL with your own demo video link.
-demo-video-url: "https://youtu.be/VNapdHWKoBw"
+demo-video-url: "https://youtu.be/c4q1HVilySE"
 # Short, engaging description of your project.
 desc: >
   Our project is a stock simulation system that allows users to simulate stock
