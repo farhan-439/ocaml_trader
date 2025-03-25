@@ -102,12 +102,6 @@ dune exec bin/main.exe
 - Save portfolio - Store your portfolio state
 - Help - Display command options
 
-## File Formats
-
-- **Stock Data**: CSV format with headers for stock names and historical prices
-- **Portfolio Storage**: JSON format for persistent storage of holdings and balance
-
-## Development
 
 ### Key Modules
 - **Api**: Interface for stock price API requests
@@ -115,19 +109,6 @@ dune exec bin/main.exe
 - **Stock**: Stock data structures and operations
 - **Save_portfolio**: Portfolio persistence logic
 
-### Design Principles
-- Separate interfaces (mli files) from implementations
-- Abstract data types to enforce invariants
-- Functional approach to state management
-- Clear separation between UI and business logic
-
-## Future Enhancements
-
-- Portfolio performance metrics and visualization
-- Additional market data sources
-- Trading strategy automation
-- Multiple portfolio management
-- Enhanced market simulation algorithms
 
 ## Dependencies
 
