@@ -2,33 +2,6 @@
 
 A robust portfolio management system built in OCaml that allows users to simulate stock trading with both historical data and real-time market data.
 
-## Features
-
-- **Dual Mode Operation**:
-  - Simulated mode with historical stock data
-  - Real-time mode with live market prices via API integration
-
-- **Portfolio Management**:
-  - Buy and sell stocks with immediate execution
-  - View current holdings and portfolio valuation
-  - Track cash balance and investment performance
-
-- **Data Handling**:
-  - Load historical stock data from CSV files
-  - Fetch real-time stock prices through async API calls
-  - Simulate market changes in historical mode with pattern-based price updates
-
-- **Persistence**:
-  - Save and load portfolio state across sessions
-  - Transaction history tracking
-  - Multiple portfolio file support
-
-- **User Experience**:
-  - Color-coded terminal interface with ASCII art
-  - Interactive menu system
-  - Comprehensive help documentation
-  - Confirmation dialogs for important actions
-
 ## Technical Architecture
 
 ### Core Components
